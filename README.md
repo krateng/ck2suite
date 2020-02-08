@@ -14,7 +14,8 @@ Install with `pip install stapomog`. Make sure to use `pip3` if Python 3 isn't y
 
 ## Use
 
-Copy all your image files in a folder. Name them following the pattern `name_minage-maxage.ext`. Everything after the first dot is ignored, so you can have multiple files with the same attributes.
+Copy all your image files into a folder. There's no need to crop them into circles, but make sure your characters face is somewhat centered. Name the files following the pattern `name_minage-maxage.ext`. Everything after the first dot is ignored, so you can have multiple files with the same attributes.
+
 Example:
 
 	hannah_20-30.png # will be used for the "hannah" portrait between ages 20 and 30
