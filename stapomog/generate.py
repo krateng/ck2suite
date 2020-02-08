@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import re
 from io import BytesIO
 import yaml
+import random
 
 from doreah.control import mainfunction
 from doreah.io import col
@@ -305,6 +306,18 @@ def create_metadata(moddir,inputdir):
 		metafile.write(yaml.dump({
 			"picture_source":os.path.abspath(inputdir)
 		}))
+		
+
+def create_mod_file(moddir):
+	adjs = ("Korean","Red","Amazing","Confederate","Old","Cute","Worried","Determined")
+	nouns = ("Gandalf","Velvet","Horse","Saxophone","Spice","Tzuyu","Beer","Leverage")
+	mfile = os.path.join(os.path.dirname(moddir),GLOBALCONFIG["MOD_FOLDER_NAME"] + ".mod")
+	with open(mfile,"w") as modfile:
+		modfile.write(template_modfile.format(
+			name=random.choice(adjs) + random.choice(nouns) + "'s Static Portrait Mod",
+			folder=os.path.basename(moddir)
+		))
+	print("Generated .mod file",col["yellow"](mfile))
 			
 			
 			
@@ -324,5 +337,8 @@ def main(inputdir):
 			print("Original picture source could not be found.")
 	else:
 		print("Creating new mod...")
-		create_mod(inputdir,"stapomog_portrait_mod")
-		print("Your mod can be found in",col["yellow"]("stapomog_portrait_mod"))
+		out = GLOBALCONFIG["MOD_FOLDER_NAME"]
+		create_mod(inputdir,out)	
+		print("Your mod can be found in",col["yellow"](out))
+		if USERCONFIG["CREATE_MOD_FILE"]:
+			create_mod_file(out)

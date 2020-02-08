@@ -98,3 +98,9 @@ portrait_{name} = {{
 	#cached = yes
 }}
 """
+
+template_modfile = """
+name = "{name}"
+path="mod/{folder}"
+
+"""

@@ -16,6 +16,8 @@ try:
 except:
 	print("Could not find user configuration.")
 
+
+### set defaults
 if "GAME_FOLDER" not in USERCONFIG:
 	print("Finding game install folder...")
 	possibilities = [
@@ -33,6 +35,8 @@ if "ALSO_SAVE_PNG" not in USERCONFIG:
 	USERCONFIG["ALSO_SAVE_PNG"] = True
 if "USE_SOCIETY_OVERRIDE" not in USERCONFIG:
 	USERCONFIG["USE_SOCIETY_OVERRIDE"] = False
+if "CREATE_MOD_FILE" not in USERCONFIG:
+	USERCONFIG["CREATE_MOD_FILE"] = True
 	
 
 ### save config
@@ -43,6 +47,8 @@ with open(packageutils.pkgdata("conf.yml"),"w") as conffile:
 if not os.path.exists(USERCONFIG["GAME_FOLDER"]):
 	print("Could not find CK 2 installation. Please specify in",packageutils.pkgdata("conf.yml"))
 	sys.exit(1)
+
+
 
 	
 GLOBALCONFIG = {
@@ -68,6 +74,7 @@ GLOBALCONFIG = {
 	
 	"FIRST_LAYER": 38,
 	"FRAMES_PER_LAYER": 26,
+	"MOD_FOLDER_NAME":"stapomog_portrait_mod"
 }
 
 

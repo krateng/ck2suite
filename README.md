@@ -14,7 +14,7 @@ Install with `pip install stapomog`. Make sure to use `pip3` if Python 3 isn't y
 
 ## Use
 
-Copy all your image files into a folder. There's no need to crop them into circles, but make sure your characters face is somewhat centered. Name the files following the pattern `name_minage-maxage.ext`. Everything after the first dot is ignored, so you can have multiple files with the same attributes.
+Copy all your image files into a folder. There's no need to crop them into circles, but make sure your character's face is somewhat centered. Name the files following the pattern `name_minage-maxage.ext`. Everything after the first dot is ignored, so you can have multiple files with the same attributes.
 
 Example:
 
@@ -25,5 +25,7 @@ Example:
 	tiffany.jpg # will be used for the "tiffany" portrait at any age
 	
 Then simply run the command `stapomog (folder)`. It will generate a new mod in the folder `stapomog_portrait_mod`. Merge this folder with your existing mod or use it as a standalone mod (make sure to create a .mod file).
+
+You can now assign the new portraits by adding traits with events, decisions or console commands - they are simply named `portrait_(name)`.
 
 If you add additional pictures, you can simply update your existing mod (even if you moved and renamed it) by running `stapomog (modfolder)`. Keep in mind that updating mods midgame will break your savegames if traits are added or removed.
