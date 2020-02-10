@@ -71,14 +71,17 @@ def main(modfolder):
 		modinfo = {}
 	if "files" not in modinfo: modinfo["files"] = []
 	
+	os.chdir(modfolder)
+	# go to the folder instead of path.join so that all names we print / save are relative to it
+	
 	srcfiles = []
-	for (dirpath,dirnames,filenames) in os.walk(os.path.join(modfolder,SRCFOLDER)):
+	for (dirpath,dirnames,filenames) in os.walk(SRCFOLDER):
 		srcfiles += [os.path.join(dirpath, f) for f in filenames if f.endswith(".txt")]
 	
 	for f in srcfiles:
-		identifier = f.replace("/",".")[2:]
+		identifier = f.replace("/",".")
 		
-		with open(os.path.join(modfolder,f)) as fi:
+		with open(f) as fi:
 			l = get_top_scopes(fi.read())
 		entries = {} # all entries that belong to this identifier, by folder
 		for scope,txt in l:
@@ -99,11 +102,12 @@ def main(modfolder):
 				
 		for folder in entries:
 			os.makedirs(os.path.join(modfolder,folder),exist_ok=True)
-			target = os.path.join(modfolder,folder,identifier)
+			target = os.path.join(folder,identifier)
 			if not os.path.exists(target) or target in modinfo["files"] or ask("File "+col["yellow"](target)+" already exists and is not managed by Benedek! Overwrite?"):
 				with open(target,"w") as targetfile:
 					targetfile.write("\n".join(entries[folder]))
 				modinfo["files"].append(target)
+				print("Created file",col["green"](target))
 			
 			else:
 				print("File",col["red"](target),"was not written!")
