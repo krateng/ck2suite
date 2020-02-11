@@ -14,6 +14,6 @@ Install with `pip install benedek`. Make sure to use `pip3` if Python 3 isn't yo
 
 ## Use
 
-Instead of lots of small files everywhere over the folder structure, Benedek allows you to group thematically related things (like an event chain and its on_action trigger) together. Create your text files in the folder `benedek` within your mod directory - you can structure it any way you like with subdirectories.
+Instead of lots of small files everywhere over the folder structure, Benedek allows you to group thematically related things (like an event chain and its on_action trigger) together. To create a Benedek-mod, create a new folder in `benedekmod` in your CK2 user directory. You can add any regular CK2 script files in their normal directories in addition to Benedek-files in the `benedek` folder which you can structure in any way you like with subdirectories.
 
-Then simply call the command `benedek (modfolder)` and to prepare the mod so that CK2 can read it. Call the command again after you've made changes.
+Specify your mod metadata (name, picture, esc.) in `modinfo.yml`. Then simply call the command `benedek (modfolder)` and to prepare the mod so that CK2 can read it. Call the command again after you've made changes.
