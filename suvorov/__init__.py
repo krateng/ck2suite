@@ -1,13 +1,13 @@
 ### PACKAGE DATA
 
-name = "benedek"
+name = "suvorov"
 desc = "Tool to enable a more concise and thematically structured creation of mods for Crusader Kings 2"
 author = {
 	"name":"Johannes Krattenmacher",
 	"email":"misc@krateng.dev",
 	"github": "krateng"
 }
-version = 0,2,0
+version = 0,3,0
 versionstr = ".".join(str(n) for n in version)
 
 
@@ -18,6 +18,6 @@ resources = [
 ]
 
 commands = {
-	"benedek":"benedek:main"
+	"suvorov":"main:main"
 }
 
