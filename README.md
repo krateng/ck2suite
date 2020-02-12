@@ -16,4 +16,4 @@ Install with `pip install suvorov`. Make sure to use `pip3` if Python 3 isn't yo
 
 In the folder `suvorovmods` in your CK2 user directory, add a folder for your new mod. You can add any files according to the vanilla structure in this folder (e.g. gfx, interface, common), as well as new Suvorov-style files in the subfolder `suvorov` (you can use any folder structure inside this path).
 
-Specify your mod metadata (name, picture, esc.) in `modinfo.yml`. Then simply call the command `benedek build (modfolder)` to prepare the mod so that CK2 can read it. Call the command again after you've made changes.
+Specify your mod metadata (name, picture, esc.) in `modinfo.yml`. Then simply call the command `suvorov build (modfolder)` to prepare the mod so that CK2 can read it. Call `suvorov` without any arguments to build all your mods.
