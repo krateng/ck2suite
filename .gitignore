@@ -4,3 +4,4 @@
 *.note
 *.xcf
 nohup.out
+testfile*
