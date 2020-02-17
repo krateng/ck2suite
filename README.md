@@ -11,9 +11,35 @@ Suvorov allows you to write CK2 modifications in a more concise and organized fa
 
 Install with `pip install suvorov`. Make sure to use `pip3` if Python 3 isn't your default version.
 
+You can now create new mods in the folder `suvorovmods` in your CK2 user directory.
 
-## Use
 
-In the folder `suvorovmods` in your CK2 user directory, add a folder for your new mod. You can add any files according to the vanilla structure in this folder (e.g. gfx, interface, common), as well as new Suvorov-style files in the subfolder `suvorov` (you can use any folder structure inside this path).
+## Mod structure
 
-Specify your mod metadata (name, picture, esc.) in `modinfo.yml`. Then simply call the command `suvorov build (modfolder)` to prepare the mod so that CK2 can read it. Call `suvorov` without any arguments to build all your mods.
+In a suvorov mod, you can add any files according to the vanilla structure (e.g. gfx, interface, common), as well as new Suvorov-style files in the subfolder `suvorov` (you can use any folder structure inside this path). These files accept a syntax like vanilla files, only with an enclosing scope defining their type, e.g.:
+
+
+	events = {
+		namespace = mymod
+		
+		character_event = {
+			id = mymod.1
+			is_triggered_only = yes
+			
+			option = {
+				name = mymod.eventoption.1
+				add_trait = patient
+			}
+		}
+	}
+	
+	on_actions = {
+		on_crusade_preparation_starts = {
+			events = {
+				mymod.1
+			}
+		}
+	}
+
+
+Specify your mod metadata (name, picture, esc.) in `modinfo.yml` in the root of your folder directory. Then simply call the command `suvorov build (modfoldername)` to prepare the mod so that CK2 can read it. Call `suvorov` without any arguments to build all your mods.
