@@ -30,7 +30,7 @@ In a suvorov mod, you can add any files according to the vanilla structure (e.g.
 	├ various.txt
 	└ modinfo.yml
 
-These new files accept a syntax like vanilla files, only with an enclosing scope defining their type, e.g.:
+These new files with the ending `.txt` or `.suv` accept a syntax like vanilla files, only with an enclosing scope defining their type, e.g.:
 
 
 	events = {
@@ -57,7 +57,7 @@ These new files accept a syntax like vanilla files, only with an enclosing scope
 		}
 	}
 	
-You may also use yaml to define various things, though this is hightly experimental. 'Keys' that appear multiple times must be specified as a list instead:
+You may also use yaml to define various things in `.yml` or `.svy` files, though this is hightly experimental. 'Keys' that appear multiple times must be specified as a list instead:
 
 	events:
 	   namespace: mymod

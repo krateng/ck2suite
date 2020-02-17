@@ -70,7 +70,11 @@ def tokenize(txt):
 			
 	if buffer != "": yield buffer
 		
-		
+	
+pdx_conversions = {
+	True:"yes",
+	False:"no"
+}	
 		
 
 def topdx(parsed,indent=0):
@@ -83,7 +87,13 @@ def topdx(parsed,indent=0):
 		if isinstance(t,tuple):
 			raw += t[0] + " " + t[1] + " "
 			if any(isinstance(t[2],ty) for ty in [str,int,float,bool]):
-				raw += str(t[2])
+				for k in pdx_conversions:
+					if t[2] is k:
+						# need to do this cause 0 and 1 count as False and True for dict lookup
+						raw += pdx_conversions[t[2]]
+						break
+				else:
+					raw += str(t[2])
 			else:
 				raw +=  "{\n"
 				raw += topdx(t[2],indent=indent+1)
@@ -100,6 +110,7 @@ def topdx(parsed,indent=0):
 	
 keepaslist = [
 	("on_actions",None,"events"),
+	("traits",None,"opposites")
 ]
 
 

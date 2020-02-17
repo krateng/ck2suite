@@ -136,6 +136,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	srcfiles = {}
 	for (dirpath,dirnames,filenames) in os.walk("."):
 		for f in filenames:
+			if f.startswith("."): continue
 			pth = os.path.join(dirpath, f)
 			srcfiles[pth] = os.path.getmtime(pth)
 	if "modinfo.yml" in srcfiles: srcfiles.pop("modinfo.yml")
@@ -178,8 +179,13 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 		else:
 			print("Parsing",col["yellow"](f))
 			identifier = os.path.relpath(os.path.splitext(f)[0],start=SUVOROVSRCFOLDER).replace("/",".")
-			with open(f) as fh:
-				entries,individual_files = process_suv_file(fh.read(),trgtfolder)
+			ext = os.path.splitext(f)[1].lower()
+			if ext in (".txt",".suv"):
+				with open(f) as fh:
+					entries,individual_files = process_suv_file(fh.read())
+			elif ext in (".yaml",".yml",".svy"):
+				with open(f) as fh:
+					entries,individual_files = process_svy_file(fh.read())
 				
 			for folder in entries:
 				os.makedirs(os.path.join(trgtfolder,folder),exist_ok=True)
@@ -188,7 +194,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 				
 				# check if we're allowed to edit this file or it has been created by someone else
 				canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
-				if canown or ask("File "+col["yellow"](target)+" exists and is not managed by Suvorov! Overwrite?"):
+				if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
 					print("Creating",col["green"](target))
 					new_createdfiles.append(target)
 					modinfo["times"][f] = srcfiles[f]
@@ -204,7 +210,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 				
 				# check if we're allowed to edit this file or it has been created by someone else
 				canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
-				if canown or ask("File "+col["yellow"](target)+" exists and is not managed by Suvorov! Overwrite?"):
+				if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
 					print("Creating",col["green"](target))
 					new_createdfiles.append(target)
 					modinfo["times"][f] = srcfiles[f]
@@ -228,8 +234,8 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	
 	
 	
-	
-def process_suv_file(content,targetfolder):
+# text files with enclosing scopes
+def process_suv_file(content):
 	
 	l = get_top_scopes(content)
 	entries = {} # all entries that belong to this identifier, by folder
@@ -260,6 +266,15 @@ def process_suv_file(content,targetfolder):
 			
 			
 	return entries,individual_files
+	
+	
+# yml files
+def process_svy_file(content):
+
+	from .ck2parse import dict_convert, topdx
+	
+	data = dict_convert(yaml.safe_load(content))
+	return process_suv_file(topdx(data)) #for now
 	
 	
 	
