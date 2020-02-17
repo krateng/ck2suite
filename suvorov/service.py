@@ -1,5 +1,6 @@
 import time
 import os
+import shutil
 import yaml
 from doreah.io import col
 from .conf import VANILLAMODFOLDER, SUVOROVMODFOLDER
@@ -15,8 +16,9 @@ except:
 def parse_mods():
 	actual_mods = {}
 	for folder in [f for f in os.listdir(SUVOROVMODFOLDER) if os.path.isdir(os.path.join(SUVOROVMODFOLDER,f))]:
-		modificationtime = os.path.getmtime(os.path.join(SUVOROVMODFOLDER,folder))
-		actual_mods[folder] = modificationtime
+		#modificationtime = os.path.getmtime(os.path.join(SUVOROVMODFOLDER,folder))
+		mtime = max(os.path.getmtime(f) for f,_,_ in os.walk(os.path.join(SUVOROVMODFOLDER,folder)))
+		actual_mods[folder] = mtime
 	
 	any_change = False
 	for mod in list(actual_mods.keys()) + list(mods.keys()):
@@ -46,8 +48,12 @@ def parse_mods():
 
 	# save after check
 	if any_change:
-		with open(os.path.join(SUVOROVMODFOLDER,"suvorov.yml"),"w") as suvorovfile:
+		with open(os.path.join(SUVOROVMODFOLDER,"suvorovnew.yml"),"w") as suvorovfile:
 			yaml.dump(mods,suvorovfile)
+		shutil.move(os.path.join(SUVOROVMODFOLDER,"suvorovnew.yml"),os.path.join(SUVOROVMODFOLDER,"suvorov.yml"))
+
+
+
 #while True:
 	
 #	time.sleep(5)

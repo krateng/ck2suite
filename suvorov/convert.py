@@ -40,6 +40,11 @@ scope_types = {
 	"characters":("history/characters",False)
 }
 
+scope_types_separate_files = {
+	"provinces":("history/provinces",),
+	"titles":("history/titles",)
+}
+
 
 # build_mod: takes mod name, converts in standard directories
 # delete_mod: takes mod name, deletes in standard directories
@@ -63,6 +68,9 @@ def get_top_scopes(txt):
 				scopes.append((name,expr))
 				name, expr = "",""
 			else: expr += char
+			
+		elif char == "\n" and depth == 0:
+			name = ""
 			
 		else:
 			if depth == 0: name += char
@@ -137,11 +145,21 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	removed_files = [f for f in modinfo["results"] if f not in srcfiles]
 	
 	# convert individual files
+	
+	
 	for f in removed_files:
 		for rf in modinfo["results"][f]:
 			print("Removing",col["red"](rf),"as its source",col["red"](f),"no longer exists.")
-			# os.remove(os.path.join(trgtfolder,rf))
+			try:
+				os.remove(os.path.join(trgtfolder,rf))
+			except FileNotFoundError:
+				pass
+		modinfo["results"].pop(f)
 	for f in changed_files:
+	
+		# get all files that have been created for this file
+		old_createdfiles = modinfo["results"].get(f) or []
+		new_createdfiles = []
 		
 		
 		#check if suvorov file
@@ -153,12 +171,12 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 			os.makedirs(os.path.dirname(target),exist_ok=True)
 			shutil.copyfile(f,target)
 			modinfo["times"][f] = srcfiles[f]
-			modinfo["results"].setdefault(f,[]).append(f)
+			new_createdfiles.append(f)
 		else:
 			print("Parsing",col["yellow"](f))
 			identifier = os.path.relpath(os.path.splitext(f)[0],start=SRCFOLDER).replace("/",".")
 			with open(f) as fh:
-				entries = process_suv_file(fh.read(),trgtfolder)
+				entries,individual_files = process_suv_file(fh.read(),trgtfolder)
 				
 			for folder in entries:
 				os.makedirs(os.path.join(trgtfolder,folder),exist_ok=True)
@@ -166,15 +184,36 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 				fulltarget = os.path.join(trgtfolder,target)
 				
 				# check if we're allowed to edit this file or it has been created by someone else
-				canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"])
+				canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
 				if canown or ask("File "+col["yellow"](target)+" exists and is not managed by Suvorov! Overwrite?"):
 					print("Creating",col["green"](target))
-					modinfo["results"].setdefault(f,[]).append(target)
+					new_createdfiles.append(target)
 					modinfo["times"][f] = srcfiles[f]
 					with open(fulltarget,"w") as tf:
 						tf.write("\n".join(entries[folder]))
 				else:
 					print("Did not create",col["red"](target))
+					
+			for target in individual_files:
+				directory = os.path.dirname(target)
+				os.makedirs(os.path.join(trgtfolder,directory),exist_ok=True)
+				fulltarget = os.path.join(trgtfolder,target)
+				
+				# check if we're allowed to edit this file or it has been created by someone else
+				canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
+				if canown or ask("File "+col["yellow"](target)+" exists and is not managed by Suvorov! Overwrite?"):
+					print("Creating",col["green"](target))
+					new_createdfiles.append(target)
+					modinfo["times"][f] = srcfiles[f]
+					with open(fulltarget,"w") as tf:
+						tf.write(individual_files[target])
+				else:
+					print("Did not create",col["red"](target))
+					
+		
+		modinfo["results"][f] = list(set(new_createdfiles))
+		for fr in [fil for fil in old_createdfiles if fil not in new_createdfiles]:
+			print("Removing",col["red"](fr),"as its no longer created by source",col["red"](f))
 				
 			
 			
@@ -191,6 +230,7 @@ def process_suv_file(content,targetfolder):
 	
 	l = get_top_scopes(content)
 	entries = {} # all entries that belong to this identifier, by folder
+	individual_files = {}
 	for scope,txt in l:
 		if scope in scope_types:
 			folder,keep = scope_types[scope]
@@ -203,11 +243,20 @@ def process_suv_file(content,targetfolder):
 			entries.setdefault(folder,[]).append(txt)
 			
 			
+		elif scope in scope_types_separate_files:
+			folder, = scope_types_separate_files[scope]
+			txt = "\n".join(l[1:] for l in txt.split("\n") if l.startswith("\t"))
+			subscopes = get_top_scopes(txt)
+			for sscope,stxt in subscopes:
+				filename = os.path.join(folder,sscope + ".txt")
+				stxt = "\n".join(l[1:] for l in stxt.split("\n") if l.startswith("\t"))
+				individual_files[filename] = stxt
 			
 		else:
 			print("\tScope",col["red"](scope),"is not valid.")
 			
-	return entries
+			
+	return entries,individual_files
 	
 	
 	

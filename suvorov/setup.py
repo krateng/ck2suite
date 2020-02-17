@@ -1,7 +1,6 @@
 import os
-from .conf import CK2USERFOLDER, SUVOROVMODFOLDER
+from .conf import CK2USERFOLDER, SUVOROVMODFOLDER, SERVICEUNITFILE
 
-unitf = os.path.expanduser("/usr/lib/systemd/system/suvorov.service")
 unitfilecontent = """
 [Unit]
 Description=Suvorov
@@ -21,8 +20,8 @@ def setup():
 	stat = os.stat(CK2USERFOLDER)
 	os.chown(SUVOROVMODFOLDER,stat.st_uid,stat.st_gid)
 	try:
-		os.makedirs(os.path.dirname(unitf),exist_ok=True)
-		with open(unitf,"w") as unitfile:
+		os.makedirs(os.path.dirname(SERVICEUNITFILE),exist_ok=True)
+		with open(SERVICEUNITFILE,"w") as unitfile:
 			unitfile.write(unitfilecontent)
 	except PermissionError:
 		print("Please run as administrator.")
