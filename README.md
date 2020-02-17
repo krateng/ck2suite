@@ -16,7 +16,21 @@ You can now create new mods in the folder `suvorovmods` in your CK2 user directo
 
 ## Mod structure
 
-In a suvorov mod, you can add any files according to the vanilla structure (e.g. gfx, interface, common), as well as new Suvorov-style files in the subfolder `suvorov` (you can use any folder structure inside this path). These files accept a syntax like vanilla files, only with an enclosing scope defining their type, e.g.:
+In a suvorov mod, you can add any files according to the vanilla structure (e.g. gfx, interface, common) in the `pdx` subfolder. For new, suvorov-style files, you can follow any folder structure you like (except the `pdx` folder of course). So your mod could look like this:
+
+	mymod
+	├ pdx
+	| ├ gfx
+	| | └ trait.png
+	| └ localisation
+	|   └ texts.csv
+	├ crusade_changes
+	|  ├ crusade_start.txt
+	|  └ crusade_end.txt
+	├ various.txt
+	└ modinfo.yml
+
+These new files accept a syntax like vanilla files, only with an enclosing scope defining their type, e.g.:
 
 
 	events = {
@@ -29,6 +43,8 @@ In a suvorov mod, you can add any files according to the vanilla structure (e.g.
 			option = {
 				name = mymod.eventoption.1
 				add_trait = patient
+				remove_trait = cynical
+				remove_trait = arbitrary
 			}
 		}
 	}
@@ -40,6 +56,24 @@ In a suvorov mod, you can add any files according to the vanilla structure (e.g.
 			}
 		}
 	}
+	
+You may also use yaml to define various things, though this is hightly experimental. 'Keys' that appear multiple times must be specified as a list instead:
+
+	events:
+	   namespace: mymod
+	   character_event:
+	   - id: mymod.1
+	     is_triggered_only: yes
+	     option:
+	     - name: mymod.eventoption.1
+	       add_trait: patient
+	       remove_trait:
+	       - cynical
+	       - arbitrary
+	on_actions:
+	   on_crusade_preparation_starts:
+	      events:
+	      - mymod.1
 
 
-Specify your mod metadata (name, picture, esc.) in `modinfo.yml` in the root of your folder directory. Then simply call the command `suvorov build (modfoldername)` to prepare the mod so that CK2 can read it. Call `suvorov` without any arguments to build all your mods.
+Specify your mod metadata (name, picture, esc.) in `modinfo.yml` in the root of your folder directory. Then simply call the command `suvorov build (modfoldername)` to prepare the mod so that CK2 can read it. Call `suvorov build` without any arguments to build all your mods.

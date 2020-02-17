@@ -3,11 +3,11 @@ import os
 import shutil
 import yaml
 from doreah.io import col
-from .conf import VANILLAMODFOLDER, SUVOROVMODFOLDER
+from .conf import VANILLAMODFOLDER, SUVOROVMODFOLDER, CK2USERFOLDER
 from .convert import build_mod, delete_mod
 
 try:
-	with open(os.path.join(SUVOROVMODFOLDER,"suvorov.yml")) as suvorovfile:
+	with open(os.path.join(CK2USERFOLDER,"suvorov.yml")) as suvorovfile:
 		mods = yaml.safe_load(suvorovfile.read())
 	assert mods is not None
 except:
@@ -48,9 +48,9 @@ def parse_mods():
 
 	# save after check
 	if any_change:
-		with open(os.path.join(SUVOROVMODFOLDER,"suvorovnew.yml"),"w") as suvorovfile:
+		with open(os.path.join(CK2USERFOLDER,"suvorovnew.yml"),"w") as suvorovfile:
 			yaml.dump(mods,suvorovfile)
-		shutil.move(os.path.join(SUVOROVMODFOLDER,"suvorovnew.yml"),os.path.join(SUVOROVMODFOLDER,"suvorov.yml"))
+		shutil.move(os.path.join(CK2USERFOLDER,"suvorovnew.yml"),os.path.join(CK2USERFOLDER,"suvorov.yml"))
 
 
 

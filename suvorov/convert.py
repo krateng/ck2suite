@@ -141,12 +141,13 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	if "modinfo.yml" in srcfiles: srcfiles.pop("modinfo.yml")
 	if "./modinfo.yml" in srcfiles: srcfiles.pop("./modinfo.yml")
 	
+	# check which files are new / changed / removed
 	changed_files = [f for f in srcfiles if f not in modinfo["times"] or modinfo["times"][f] != srcfiles[f]]
 	removed_files = [f for f in modinfo["results"] if f not in srcfiles]
 	
+	
+	
 	# convert individual files
-	
-	
 	for f in removed_files:
 		for rf in modinfo["results"][f]:
 			print("Removing",col["red"](rf),"as its source",col["red"](f),"no longer exists.")
@@ -157,24 +158,26 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 		modinfo["results"].pop(f)
 	for f in changed_files:
 	
-		# get all files that have been created for this file
+		# get all files that have been created from this file
 		old_createdfiles = modinfo["results"].get(f) or []
 		new_createdfiles = []
 		
 		
 		#check if suvorov file
 		fullpath = os.path.realpath(f)
-		suvdir = os.path.realpath(SRCFOLDER)
-		if os.path.commonprefix([fullpath,suvdir]) != suvdir:
-			print("Copying",col["green"](f))
-			target = os.path.join(trgtfolder,f)
+		#suvdir = os.path.realpath(SRCFOLDER)
+		vanilladir = os.path.realpath(VANILLASRCFOLDER)
+		if os.path.commonprefix([fullpath,vanilladir]) == vanilladir:
+			relativepath = os.path.relpath(f,start=vanilladir)
+			print("Copying",col["green"](relativepath))
+			target = os.path.join(trgtfolder,relativepath)
 			os.makedirs(os.path.dirname(target),exist_ok=True)
 			shutil.copyfile(f,target)
 			modinfo["times"][f] = srcfiles[f]
 			new_createdfiles.append(f)
 		else:
 			print("Parsing",col["yellow"](f))
-			identifier = os.path.relpath(os.path.splitext(f)[0],start=SRCFOLDER).replace("/",".")
+			identifier = os.path.relpath(os.path.splitext(f)[0],start=SUVOROVSRCFOLDER).replace("/",".")
 			with open(f) as fh:
 				entries,individual_files = process_suv_file(fh.read(),trgtfolder)
 				
