@@ -57,6 +57,30 @@ These new files with the ending `.txt` or `.suv` accept a syntax like vanilla fi
 		}
 	}
 	
+In case of `.suv` files, you can also use some basic templating:
+
+
+	events = {
+		namespace = mymod
+		
+		character_event = {
+			id = mymod.2
+			is_triggered_only = yes
+			
+			@forin = {
+				@for = choice
+				@in = choices
+				option = {
+					name = $choice.name
+					$choice.attribute = 2
+				}
+			}
+		}
+	}
+	
+The data source for these can be defined over any number of `.yaml` files in your mod under the top key `data`.
+	
+<!---
 You may also use yaml to define various things in `.yml` or `.svy` files, though this is hightly experimental. 'Keys' that appear multiple times must be specified as a list instead:
 
 	events:
@@ -74,6 +98,6 @@ You may also use yaml to define various things in `.yml` or `.svy` files, though
 	   on_crusade_preparation_starts:
 	      events:
 	      - mymod.1
-
+-->
 
 Specify your mod metadata (name, picture, esc.) in `modinfo.yml` in the root of your folder directory. Then simply call the command `suvorov build (modfoldername)` to prepare the mod so that CK2 can read it. Call `suvorov build` without any arguments to build all your mods.
