@@ -4,6 +4,7 @@ import sys
 import yaml
 import re
 from doreah.io import col, ask
+from doreah.datatypes import DictStack
 
 from .conf import *
 
@@ -147,8 +148,22 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	removed_files = [f for f in modinfo["results"] if f not in srcfiles]
 	
 	
+	# if anything has been changed, we need to load all data!
+	if len(changed_files) > 0:
+		data = {}
+		for f in srcfiles:
+			if f.split(".")[-1].lower() in YML_FILE_EXTENSIONS:
+				with open(f,"r") as ymlfile:
+					content = yaml.safe_load(ymlfile.read())
+				if "data" in content: data.update(content["data"])
+				
+
 	
-	# convert individual files
+	
+	
+	# deal with individual files
+	
+	
 	for f in removed_files:
 		for rf in modinfo["results"][f]:
 			print("Removing",col["red"](rf),"as its source",col["red"](f),"no longer exists.")
@@ -177,48 +192,56 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 			modinfo["times"][f] = srcfiles[f]
 			new_createdfiles.append(f)
 		else:
-			print("Parsing",col["yellow"](f))
+			
 			identifier = os.path.relpath(os.path.splitext(f)[0],start=SUVOROVSRCFOLDER).replace("/",".")
-			ext = os.path.splitext(f)[1].lower()
-			if ext in (".txt",".suv"):
-				with open(f) as fh:
-					entries,individual_files = process_suv_file(fh.read())
-			elif ext in (".yaml",".yml",".svy"):
-				with open(f) as fh:
-					entries,individual_files = process_svy_file(fh.read())
+			ext = f.split(".")[-1].lower()
+			if ext in TXT_FILE_EXTENSIONS + SUV_FILE_EXTENSIONS:
+				print("Parsing",col["yellow"](f))
+				if ext in TXT_FILE_EXTENSIONS:
+					with open(f) as fh:
+						entries,individual_files = process_txt_file(fh.read())
+				#elif ext in YML_FILE_EXTENSIONS:
+				#	with open(f) as fh:
+				#		entries,individual_files = process_svy_file(fh.read())
+				if ext in SUV_FILE_EXTENSIONS:
+					with open(f) as fh:
+						entries,individual_files = process_suv_file(fh.read(),data)
 				
-			for folder in entries:
-				os.makedirs(os.path.join(trgtfolder,folder),exist_ok=True)
-				target = os.path.join(folder,identifier) + ".txt"
-				fulltarget = os.path.join(trgtfolder,target)
 				
-				# check if we're allowed to edit this file or it has been created by someone else
-				canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
-				if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
-					print("Creating",col["green"](target))
-					new_createdfiles.append(target)
-					modinfo["times"][f] = srcfiles[f]
-					with open(fulltarget,"w") as tf:
-						tf.write("\n".join(entries[folder]))
-				else:
-					print("Did not create",col["red"](target))
+				for folder in entries:
+					os.makedirs(os.path.join(trgtfolder,folder),exist_ok=True)
+					target = os.path.join(folder,identifier) + ".txt"
+					fulltarget = os.path.join(trgtfolder,target)
 					
-			for target in individual_files:
-				directory = os.path.dirname(target)
-				os.makedirs(os.path.join(trgtfolder,directory),exist_ok=True)
-				fulltarget = os.path.join(trgtfolder,target)
-				
-				# check if we're allowed to edit this file or it has been created by someone else
-				canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
-				if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
-					print("Creating",col["green"](target))
-					new_createdfiles.append(target)
-					modinfo["times"][f] = srcfiles[f]
-					with open(fulltarget,"w") as tf:
-						tf.write(individual_files[target])
-				else:
-					print("Did not create",col["red"](target))
+					# check if we're allowed to edit this file or it has been created by someone else
+					canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
+					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
+						print("\tCreating",col["green"](target))
+						new_createdfiles.append(target)
+						modinfo["times"][f] = srcfiles[f]
+						with open(fulltarget,"w") as tf:
+							tf.write("\n".join(entries[folder]))
+					else:
+						print("\tDid not create",col["red"](target))
+						
+				for target in individual_files:
+					directory = os.path.dirname(target)
+					os.makedirs(os.path.join(trgtfolder,directory),exist_ok=True)
+					fulltarget = os.path.join(trgtfolder,target)
 					
+					# check if we're allowed to edit this file or it has been created by someone else
+					canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
+					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
+						print("\tCreating",col["green"](target))
+						new_createdfiles.append(target)
+						modinfo["times"][f] = srcfiles[f]
+						with open(fulltarget,"w") as tf:
+							tf.write(individual_files[target])
+					else:
+						print("\tDid not create",col["red"](target))
+					
+			else:
+				print("File",col["red"](f),"will be ignored...")
 		
 		modinfo["results"][f] = list(set(new_createdfiles))
 		for fr in [fil for fil in old_createdfiles if fil not in new_createdfiles]:
@@ -235,7 +258,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	
 	
 # text files with enclosing scopes
-def process_suv_file(content):
+def process_txt_file(content):
 	
 	l = get_top_scopes(content)
 	entries = {} # all entries that belong to this identifier, by folder
@@ -267,6 +290,17 @@ def process_suv_file(content):
 			
 	return entries,individual_files
 	
+# text files with additional logic
+def process_suv_file(content,data):
+	from .ck2parse import nested_tokens, tokenize, parse, topdx
+	from .suvfile import suv_eval
+	
+	t = parse(nested_tokens(tokenize(content)))
+	datastack = DictStack(data)
+	result = list(suv_eval(t,datastack))
+	return process_txt_file(topdx(result)) # for now
+
+	
 	
 # yml files
 def process_svy_file(content):
@@ -274,7 +308,7 @@ def process_svy_file(content):
 	from .ck2parse import dict_convert, topdx
 	
 	data = dict_convert(yaml.safe_load(content))
-	return process_suv_file(topdx(data)) #for now
+	return process_txt_file(topdx(data)) #for now
 	
 	
 	
