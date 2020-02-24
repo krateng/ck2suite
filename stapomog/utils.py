@@ -31,17 +31,17 @@ def interpret(inp):
 		try: maxage = int(maxage)
 		except: maxage = None
 		agerange = (minage,maxage)
-		portrait_ages = get_closest_match(agerange)["portrait_ages"]
+		portrait_ages = get_closest_match(agerange)["portrait_age_range"]
 		return (agerange,portrait_ages)
 	else:
 		inp = inp.lower()
 		for r in ranges:
 			if inp in ranges[r]["aliases"]:
 				agerange = ranges[r]["range"]
-				portrait_ages = ranges[r]["portrait_ages"]
+				portrait_ages = ranges[r]["portrait_age_range"]
 				return (agerange,portrait_ages)
 				
-		return (ranges["full"]["range"],ranges["full"]["portrait_ages"])
+		return (ranges["full"]["range"],ranges["full"]["portrait_age_range"])
 			
 
 

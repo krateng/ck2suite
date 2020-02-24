@@ -82,37 +82,37 @@ GLOBALCONFIG = {
 		"teen":{
 			"range":(None,19),
 			"aliases":("t","teen"),
-			"portrait_ages":("young",)
+			"portrait_age_range":("young","midage")
 		},
 		"young":{
 			"range":(None,29),
 			"aliases":("y","young"),
-			"portrait_ages":("young",)
+			"portrait_age_range":("young","midage")
 		},
 		"middleaged":{
 			"range":(30,49),
 			"aliases":("m","middle","mid"),
-			"portrait_ages":("mid",)
+			"portrait_age_range":("midage","oldage")
 		},
 		"old":{
 			"range":(50,None),
 			"aliases":("o","old"),
-			"portrait_ages":("old",)
+			"portrait_age_range":("oldage",None)
 		},
 		"youngmiddle":{
 			"range":(None,49),
 			"aliases":("ym"),
-			"portrait_ages":("young","mid")
+			"portrait_age_range":("young","oldage")
 		},
 		"midold":{
 			"range":(30,None),
 			"aliases":("mo"),
-			"portrait_ages":("mid","old")
+			"portrait_age_range":("midage",None)
 		},
 		"full":{
 			"range":(None,None),
 			"aliases":("ymo",""),
-			"portrait_ages":("young","mid","old")
+			"portrait_age_range":("young",None)
 		}
 	}
 }

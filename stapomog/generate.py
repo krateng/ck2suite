@@ -83,7 +83,8 @@ def read_raw_portraits(folder):
 				name,agerangeraw,trait, *_ = rawname.split("_") + ["","",""]
 				
 				agerange,portrait_ranges = interpret(agerangeraw)
-				minage,maxage = agerange
+				#minage,maxage = agerange
+				#minagegroup,maxagegroup = portrait_ranges
 				
 				if trait == "": trait = None
 				
@@ -104,7 +105,7 @@ def read_raw_portraits(folder):
 				
 					
 				
-				portraits.append({"name":name,"minage":minage,"maxage":maxage,"ages":portrait_ranges,"trait":trait,"img":img})
+				portraits.append({"name":name,"ages_num":agerange,"ages_group":portrait_ranges,"trait":trait,"img":img})
 				#img.show()
 	#print(portraits)
 	
@@ -199,17 +200,19 @@ def create_society_overrides(sprites,moddir):
 			entries = [entry for entry in sprites[spritename] if entry is not None]
 			persons = set(entry["name"] for entry in entries)
 			
-			overridesfile.write(template_portraittype.format(spritename=spritename,
-									conditions_portrait_trait="\n".join(template_condition_portraittrait.format(name=p) for p in persons),
-									portrait_props="\n".join(template_portrait_prop.format(
-										index=entry["sprite"][1],
-										ageconditions="\n".join(template_portrait_prop_agecondition.format(
-											age=age
-										) for age in entry["ages"]),
-										traitconditions=("" if entry["trait"] is None else template_condition_trait.format(name=entry["trait"]))
-									) for entry in entries),
-									sprite_name=spritename
-								))
+			overridesfile.write(template_portraittype.format(
+				spritename=spritename,
+				conditions_portrait_trait="\n".join(template_condition_portraittrait.format(name=p) for p in persons),
+				portrait_props="\n".join(template_portrait_prop.format(
+					index=entry["sprite"][1],
+					ageconditions = "\n".join([
+						"" if entry["ages_group"][0] is None else template_portrait_prop_agecondition.format(age=entry["ages_group"][0]),
+						"" if entry["ages_group"][1] is None else template_portrait_prop_agecondition_negate.format(age=entry["ages_group"][1])
+					]),
+					traitconditions=("" if entry["trait"] is None else template_condition_trait.format(name=entry["trait"]))
+				) for entry in entries),
+				sprite_name=spritename
+			))
 		overridesfile.write("}")
 
 

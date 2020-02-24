@@ -92,15 +92,16 @@ template_condition_trait = """
 
 template_portrait_prop = """
 				{index} = {{
-					OR = {{
-						{ageconditions}
-					}}
+					{ageconditions}
 					{traitconditions}
 				}}
 """
 
 template_portrait_prop_agecondition = """
-						portrait_age == {age} 
+					portrait_age = {age}
+"""
+template_portrait_prop_agecondition_negate = """
+					NOT = {{ portrait_age = {age} }}
 """
 
 template_trait = """
