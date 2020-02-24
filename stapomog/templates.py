@@ -71,7 +71,7 @@ template_portraittype = """
 			"GFX_empty:c1"
 			"GFX_empty:c4"
 			"GFX_empty:p1:h:y"
-			"GFX_character_static_0:c5"
+			"{sprite_name}:c5"
 		}}
 
 		allow_property_values = {{
@@ -86,8 +86,21 @@ template_portraittype = """
 template_condition_portraittrait = """
 					portrait_has_trait = portrait_{name}
 """
+template_condition_trait = """
+					portrait_has_trait = {name}
+"""
+
 template_portrait_prop = """
-				{index} = {{ always = yes }}
+				{index} = {{
+					OR = {{
+						{ageconditions}
+					}}
+					{traitconditions}
+				}}
+"""
+
+template_portrait_prop_agecondition = """
+						portrait_age == {age} 
 """
 
 template_trait = """
@@ -97,6 +110,28 @@ portrait_{name} = {{
 	hidden = yes	
 	#cached = yes
 }}
+"""
+
+template_decision = """
+	assign_portrait_{name} = {{
+		only_playable = yes
+		ai_target_filter = none
+		from_potential = {{
+			ai = no
+			has_global_flag = {flag}
+		}}
+		
+		potential = {{
+			always = yes
+		}}
+		allow = {{
+			always = yes
+		}}
+		effect = {{
+			add_trait = portrait_{name}
+		}}
+	}}
+
 """
 
 template_modfile = """

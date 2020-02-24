@@ -12,6 +12,7 @@ from doreah.io import col
 
 from .config import GLOBALCONFIG, USERCONFIG
 from .templates import *
+from .utils import interpret
 
 
 
@@ -59,6 +60,9 @@ def create_mod(inputdir,moddir):
 		
 		
 	create_traits(people,moddir)
+	
+	create_decisions(people,moddir,flag=USERCONFIG["FLAG_TO_SHOW_ASSIGN_DECISIONS"])
+		
 	create_documentation(people,moddir)
 	create_metadata(moddir,inputdir)
 
@@ -69,37 +73,39 @@ def create_mod(inputdir,moddir):
 def read_raw_portraits(folder):
 	portraits = []
 
-	for f in os.listdir(folder):
-		if f.split(".")[-1].lower() in GLOBALCONFIG["IMAGE_EXTENSIONS"]:
-			rawname = f.split(".")[0]
-			name,agerange, *_ = rawname.split("_") + ["",""]
-			try:
-				minage,maxage = agerange.split("-")
-				try: minage = int(minage)
-				except: minage = None
-				try: maxage = int(maxage)
-				except: maxage = None
-			except: minage,maxage = None,None
-			
-			
-			img = Image.open(os.path.join(folder,f))
-			# SCALE
-			width, height = img.width, img.height
-			scale = 152 / min(width,height)
-			if scale != 1:
-				img = img.resize((int(scale*width),int(scale*height)))
-			# CROP TO SQUARE
-			width, height = img.width, img.height
-			left_offset = (width - 152) / 2
-			top_offset = (height - 152) / 2
-			img = img.crop((left_offset,top_offset,152+left_offset,152+top_offset))
-			# CROP TO CIRCLE
-			img = Image.composite(img,EMPTY,CIRCLEMASK)
-			
+	
+	#for f in os.listdir(folder):
+	for pth,dirs,files in os.walk(folder,topdown=True):
+		dirs[:] = [d for d in dirs if not d.startswith(".")]
+		for f in files:
+			if f.split(".")[-1].lower() in GLOBALCONFIG["IMAGE_EXTENSIONS"]:
+				rawname = f.split(".")[0]
+				name,agerangeraw,trait, *_ = rawname.split("_") + ["","",""]
 				
-			
-			portraits.append({"name":name,"minage":minage,"maxage":maxage,"img":img})
-			#img.show()
+				agerange,portrait_ranges = interpret(agerangeraw)
+				minage,maxage = agerange
+				
+				if trait == "": trait = None
+				
+				
+				img = Image.open(os.path.join(folder,pth,f))
+				# SCALE
+				width, height = img.width, img.height
+				scale = 152 / min(width,height)
+				if scale != 1:
+					img = img.resize((int(scale*width),int(scale*height)))
+				# CROP TO SQUARE
+				width, height = img.width, img.height
+				left_offset = (width - 152) / 2
+				top_offset = (height - 152) / 2
+				img = img.crop((left_offset,top_offset,152+left_offset,152+top_offset))
+				# CROP TO CIRCLE
+				img = Image.composite(img,EMPTY,CIRCLEMASK)
+				
+					
+				
+				portraits.append({"name":name,"minage":minage,"maxage":maxage,"ages":portrait_ranges,"trait":trait,"img":img})
+				#img.show()
 	#print(portraits)
 	
 	return portraits
@@ -195,7 +201,15 @@ def create_society_overrides(sprites,moddir):
 			
 			overridesfile.write(template_portraittype.format(spritename=spritename,
 									conditions_portrait_trait="\n".join(template_condition_portraittrait.format(name=p) for p in persons),
-									portrait_props="\n".join(template_portrait_prop.format(index=entry["sprite"][1]) for entry in entries)))
+									portrait_props="\n".join(template_portrait_prop.format(
+										index=entry["sprite"][1],
+										ageconditions="\n".join(template_portrait_prop_agecondition.format(
+											age=age
+										) for age in entry["ages"]),
+										traitconditions=("" if entry["trait"] is None else template_condition_trait.format(name=entry["trait"]))
+									) for entry in entries),
+									sprite_name=spritename
+								))
 		overridesfile.write("}")
 
 
@@ -281,11 +295,18 @@ def create_portrait_properties(sprites,moddir):
 def create_traits(people,moddir):
 	tfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["TRAITS"])
 	with open(tfile,"w") as trait_file:
-		for person in people:
+		for person in sorted(people): # make sure order is deterministic to keep savegame compatibility if no traits are added / removed
 			trait_file.write(template_trait.format(name=person))
 		
-		
 
+# create decisions
+def create_decisions(people,moddir,flag):
+	dfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["DECISIONS"])
+	with open(dfile,"w") as decisions_file:
+		decisions_file.write("targetted_decisions = {")
+		for person in people:
+			decisions_file.write(template_decision.format(name=person,flag=flag))	
+		decisions_file.write("}")
 		
 		
 		

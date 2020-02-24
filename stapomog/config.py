@@ -37,7 +37,9 @@ if "USE_SOCIETY_OVERRIDE" not in USERCONFIG:
 	USERCONFIG["USE_SOCIETY_OVERRIDE"] = False
 if "CREATE_MOD_FILE" not in USERCONFIG:
 	USERCONFIG["CREATE_MOD_FILE"] = True
-	
+if "FLAG_TO_SHOW_ASSIGN_DECISIONS" not in USERCONFIG:
+	USERCONFIG["FLAG_TO_SHOW_ASSIGN_DECISIONS"] = "debug_stapomog"
+		
 
 ### save config
 with open(packageutils.pkgdata("conf.yml"),"w") as conffile:
@@ -58,6 +60,7 @@ GLOBALCONFIG = {
 		"PORTRAIT_SPRITES_DEFINITION": "interface/portraits/stapomog_static_portrait_sprites.gfx",
 		"PORTRAIT_TYPES_DEFINITION": "interface/portraits/stapomog_static_portrait_types.gfx",
 		"TRAITS": "common/traits/stapomog_static_portrait_traits.txt",
+		"DECISIONS": "decisions/stapomog_static_portrait_decisions.txt",
 		"SPRITES": "gfx/characters/stapomog_static_portraits_{idx}.dds"
 	},
 	"MOD_FOLDERS":{
@@ -74,7 +77,44 @@ GLOBALCONFIG = {
 	
 	"FIRST_LAYER": 38,
 	"FRAMES_PER_LAYER": 26,
-	"MOD_FOLDER_NAME":"stapomog_portrait_mod"
+	"MOD_FOLDER_NAME":"stapomog_portrait_mod",
+	"AGE_RANGES":{
+		"teen":{
+			"range":(None,19),
+			"aliases":("t","teen"),
+			"portrait_ages":("young",)
+		},
+		"young":{
+			"range":(None,29),
+			"aliases":("y","young"),
+			"portrait_ages":("young",)
+		},
+		"middleaged":{
+			"range":(30,49),
+			"aliases":("m","middle","mid"),
+			"portrait_ages":("mid",)
+		},
+		"old":{
+			"range":(50,None),
+			"aliases":("o","old"),
+			"portrait_ages":("old",)
+		},
+		"youngmiddle":{
+			"range":(None,49),
+			"aliases":("ym"),
+			"portrait_ages":("young","mid")
+		},
+		"midold":{
+			"range":(30,None),
+			"aliases":("mo"),
+			"portrait_ages":("mid","old")
+		},
+		"full":{
+			"range":(None,None),
+			"aliases":("ymo",""),
+			"portrait_ages":("young","mid","old")
+		}
+	}
 }
 
 
