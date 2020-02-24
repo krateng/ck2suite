@@ -14,6 +14,8 @@ from .config import GLOBALCONFIG, USERCONFIG
 from .templates import *
 from .utils import interpret
 
+from .ck2parse import topdx
+
 
 
 
@@ -186,7 +188,7 @@ def create_sprites(layers,moddir):
 			i += 1
 
 		
-		spritefile.write("}")	
+		spritefile.write("}")
 	
 	return sprites
 	
@@ -194,27 +196,48 @@ def create_sprites(layers,moddir):
 
 ### DEFINE SOCIETY OVERRIDES
 def create_society_overrides(sprites,moddir):
+
+
+	types = [
+		("spriteTypes","=",[
+			("portraitType","=",[
+				("name","=","PORTRAIT_" + spritename),
+				("weight","=",[
+					("additive_modifier","=",[
+						("value","=",1000000),
+						("portrait_clothing","=","yes"),
+						("OR","=",[
+							("portrait_has_trait","=","portrait_" + name) for name in set(entry["name"] for entry in sprites[spritename] if entry is not None)
+						])
+					])
+				]),
+				("layer","=",[
+					'"GFX_empty:c0"',
+					'"GFX_empty:c2"',
+					'"GFX_empty:c3"',
+					'"GFX_empty:c1"',
+					'"GFX_empty:c4"',
+					'"GFX_empty:p1:h:y"',
+					'"' + spritename + ':c5"'
+				]),
+				("allow_property_values","=",[
+					("5","=",[
+						("0","=","{ always = no }")
+					] + [
+						(str(entry["sprite"][1]),"=",[
+							"" if entry["ages_group"][0] is None else ("portrait_age","=",entry["ages_group"][0]),
+							"" if entry["ages_group"][1] is None else ("NOT","=",[("portrait_age","=",entry["ages_group"][1])]),
+							"" if entry["trait"] is None else ("trait","=",entry["trait"])
+						]) for entry in [e for e in sprites[spritename] if e is not None]
+					])
+				])
+			]) for spritename in sprites
+		])
+	]
+
 	orfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["PORTRAIT_TYPES_DEFINITION"])
 	with open(orfile,"w") as overridesfile:
-		overridesfile.write("spriteTypes = {")
-		for spritename in sprites:
-			entries = [entry for entry in sprites[spritename] if entry is not None]
-			persons = set(entry["name"] for entry in entries)
-			
-			overridesfile.write(template_portraittype.format(
-				spritename=spritename,
-				conditions_portrait_trait="\n".join(template_condition_portraittrait.format(name=p) for p in persons),
-				portrait_props="\n".join(template_portrait_prop.format(
-					index=entry["sprite"][1],
-					ageconditions = "\n".join([
-						"" if entry["ages_group"][0] is None else template_portrait_prop_agecondition.format(age=entry["ages_group"][0]),
-						"" if entry["ages_group"][1] is None else template_portrait_prop_agecondition_negate.format(age=entry["ages_group"][1])
-					]),
-					traitconditions=("" if entry["trait"] is None else template_condition_trait.format(name=entry["trait"]))
-				) for entry in entries),
-				sprite_name=spritename
-			))
-		overridesfile.write("}")
+		overridesfile.write(topdx(types))
 
 
 ### CREATE OLD STYLE PORTRAIT PROPERTIES
@@ -297,35 +320,68 @@ def create_portrait_properties(sprites,moddir):
 
 # create traits
 def create_traits(people,moddir):
+
+	traits = [
+		("portrait_" + person,"=",[
+			("customizer","=","no"),
+			("random","=","no"),
+			("hidden","=","yes")	
+		]) for person in sorted(people)
+	]
+
 	tfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["TRAITS"])
 	with open(tfile,"w") as trait_file:
-		for person in sorted(people): # make sure order is deterministic to keep savegame compatibility if no traits are added / removed
-			trait_file.write(template_trait.format(name=person))
+		trait_file.write(topdx(traits))
 		
 
 # create decisions
 def create_decisions(people,moddir):
+
+	decisions = [
+		("targetted_decisions","=",[
+			("assign_portrait_" + person,"=",[
+				("only_playable","=","yes"),
+				("ai_target_filter","=","none"),
+				("from_potential","=",[
+					("ai","=","no"),
+					("has_global_flag","=",USERCONFIG["FLAG_TO_SHOW_ASSIGN_DECISIONS"])
+				]),
+				("potential","=","{ always = yes }"),
+				("allow","=","{ always = yes }"),
+				("effect","=",[
+					("add_trait","=","portrait_" + person)
+				])
+			]) for person in people
+		])
+	]
+
 	dfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["DECISIONS"])
 	with open(dfile,"w") as decisions_file:
-		decisions_file.write("targetted_decisions = {")
-		for person in people:
-			decisions_file.write(template_decision.format(name=person,flag=USERCONFIG["FLAG_TO_SHOW_ASSIGN_DECISIONS"]))	
-		decisions_file.write("}")
+		decisions_file.write(topdx(decisions))
 		
 def create_macros(people,moddir):
+
+	effects = [
+		("remove_stapomog_portrait_traits","=",[
+			("remove_trait","=","portrait_" + person) for person in people
+		])
+	]
+	
+	triggers = [
+		("has_stapomog_portrait","=",[
+			("OR","=",[
+				("trait","=","portrait_" + person) for person in people
+			])
+		])
+	]
+	
 	efile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["SCRIPTED_EFFECTS"])
 	with open(efile,"w") as effects_file:
-		effects_file.write("remove_stapomog_portrait_traits = {")
-		for person in people:
-			effects_file.write(template_scripted_effect.format(name=person))	
-		effects_file.write("}")
+		effects_file.write(topdx(effects))
 		
 	tfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["SCRIPTED_TRIGGERS"])
 	with open(tfile,"w") as trigger_file:
-		trigger_file.write("has_stapomog_portrait = {\n\tOR = {")
-		for person in people:
-			trigger_file.write(template_scripted_trigger.format(name=person))	
-		trigger_file.write("\t}\n}")
+		trigger_file.write(topdx(triggers))
 		
 		
 		

@@ -103,12 +103,12 @@ GLOBALCONFIG = {
 		},
 		"youngmiddle":{
 			"range":(None,49),
-			"aliases":("ym"),
+			"aliases":("ym",),
 			"portrait_age_range":("young","oldage")
 		},
 		"midold":{
 			"range":(30,None),
-			"aliases":("mo"),
+			"aliases":("mo",),
 			"portrait_age_range":("midage",None)
 		},
 		"full":{
