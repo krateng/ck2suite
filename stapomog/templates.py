@@ -135,6 +135,14 @@ template_decision = """
 
 """
 
+
+template_scripted_effect = """
+	remove_trait = portrait_{name}
+"""
+template_scripted_trigger = """
+		trait = portrait_{name}
+"""
+
 template_modfile = """
 name = "{name}"
 path="mod/{folder}"

@@ -61,7 +61,8 @@ def create_mod(inputdir,moddir):
 		
 	create_traits(people,moddir)
 	
-	create_decisions(people,moddir,flag=USERCONFIG["FLAG_TO_SHOW_ASSIGN_DECISIONS"])
+	create_decisions(people,moddir)
+	create_macros(people,moddir)
 		
 	create_documentation(people,moddir)
 	create_metadata(moddir,inputdir)
@@ -303,13 +304,28 @@ def create_traits(people,moddir):
 		
 
 # create decisions
-def create_decisions(people,moddir,flag):
+def create_decisions(people,moddir):
 	dfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["DECISIONS"])
 	with open(dfile,"w") as decisions_file:
 		decisions_file.write("targetted_decisions = {")
 		for person in people:
-			decisions_file.write(template_decision.format(name=person,flag=flag))	
+			decisions_file.write(template_decision.format(name=person,flag=USERCONFIG["FLAG_TO_SHOW_ASSIGN_DECISIONS"]))	
 		decisions_file.write("}")
+		
+def create_macros(people,moddir):
+	efile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["SCRIPTED_EFFECTS"])
+	with open(efile,"w") as effects_file:
+		effects_file.write("remove_stapomog_portrait_traits = {")
+		for person in people:
+			effects_file.write(template_scripted_effect.format(name=person))	
+		effects_file.write("}")
+		
+	tfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["SCRIPTED_TRIGGERS"])
+	with open(tfile,"w") as trigger_file:
+		trigger_file.write("has_stapomog_portrait = {\n\tOR = {")
+		for person in people:
+			trigger_file.write(template_scripted_trigger.format(name=person))	
+		trigger_file.write("\t}\n}")
 		
 		
 		

@@ -61,7 +61,9 @@ GLOBALCONFIG = {
 		"PORTRAIT_TYPES_DEFINITION": "interface/portraits/stapomog_static_portrait_types.gfx",
 		"TRAITS": "common/traits/stapomog_static_portrait_traits.txt",
 		"DECISIONS": "decisions/stapomog_static_portrait_decisions.txt",
-		"SPRITES": "gfx/characters/stapomog_static_portraits_{idx}.dds"
+		"SPRITES": "gfx/characters/stapomog_static_portraits_{idx}.dds",
+		"SCRIPTED_EFFECTS":"common/scripted_effects/stapomog_effects.txt",
+		"SCRIPTED_TRIGGERS":"common/scripted_triggers/stapomog_triggers.txt"
 	},
 	"MOD_FOLDERS":{
 		"PORTRAITS": "gfx/characters/",
