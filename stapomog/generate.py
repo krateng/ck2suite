@@ -7,8 +7,6 @@ from io import BytesIO
 import yaml
 import random
 
-from pprint import pprint
-
 from doreah.control import mainfunction
 from doreah.io import col
 
@@ -16,7 +14,7 @@ from .config import GLOBALCONFIG, USERCONFIG
 from .templates import *
 from .utils import interpret
 
-from .ck2parse import topdx
+from suvorov.ck2file import CK2Definition
 
 
 
@@ -170,9 +168,6 @@ def create_sprites(layers,moddir):
 			frame["sprite"] = (spritename,j)
 			sprites[spritename][j] = frame
 		
-		
-		#spritefile.write(template_sprite.format(reference=spritename,filename=filename.replace("/",r"\\"),frames=len(layer)+1))
-		
 		if USERCONFIG["ALSO_SAVE_PNG"]:
 			png_filename = os.path.splitext(fullpath)[0] + ".png"
 			img.save(png_filename)	
@@ -188,7 +183,7 @@ def create_sprites(layers,moddir):
 		i += 1
 
 
-	sprite_defs = [
+	sprite_defs = CK2Definition([
 		("spriteTypes","=",[
 			("spriteType","=",[
 				("name","=",sprite),
@@ -199,12 +194,11 @@ def create_sprites(layers,moddir):
 			])
 			for sprite in sprites
 		])
-	]
+	])
 	
 	
 	spfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["PORTRAIT_SPRITES_DEFINITION"])
-	with open(spfile,"w") as spritefile:
-		spritefile.write(topdx(sprite_defs))
+	sprite_defs.write(spfile,format="ck2")
 	
 	return sprites
 	
@@ -214,7 +208,7 @@ def create_sprites(layers,moddir):
 def create_society_overrides(sprites,moddir):
 
 
-	types = [
+	types = CK2Definition([
 		("spriteTypes","=",[
 			("portraitType","=",[
 				("name","=","PORTRAIT_" + spritename),
@@ -249,11 +243,10 @@ def create_society_overrides(sprites,moddir):
 				])
 			]) for spritename in sprites
 		])
-	]
+	])
 
 	orfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["PORTRAIT_TYPES_DEFINITION"])
-	with open(orfile,"w") as overridesfile:
-		overridesfile.write(topdx(types))
+	types.write(orfile,format="ck2")
 
 
 ### CREATE OLD STYLE PORTRAIT PROPERTIES
@@ -337,7 +330,7 @@ def create_portrait_properties(sprites,moddir):
 # create traits
 def create_traits(people,moddir):
 
-	traits = [
+	traits = CK2Definition([
 		("portrait_" + person,"=",[
 			("customizer","=","no"),
 			("random","=","no"),
@@ -346,17 +339,16 @@ def create_traits(people,moddir):
 				"portrait_" + t for t in people if t != person
 			])	
 		]) for person in sorted(people)
-	]
+	])
 
 	tfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["TRAITS"])
-	with open(tfile,"w") as trait_file:
-		trait_file.write(topdx(traits))
+	traits.write(tfile,format="ck2")
 		
 
 # create decisions
 def create_decisions(people,moddir):
 
-	decisions = [
+	decisions = CK2Definition([
 		("targetted_decisions","=",[
 			("assign_portrait_" + person,"=",[
 				("only_playable","=","yes"),
@@ -372,35 +364,32 @@ def create_decisions(people,moddir):
 				])
 			]) for person in people
 		])
-	]
+	])
 
 	dfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["DECISIONS"])
-	with open(dfile,"w") as decisions_file:
-		decisions_file.write(topdx(decisions))
+	decisions.write(dfile,format="ck2")
 		
 def create_macros(people,moddir):
 
-	effects = [
+	effects = CK2Definition([
 		("remove_stapomog_portrait_traits","=",[
 			("remove_trait","=","portrait_" + person) for person in people
 		])
-	]
+	])
 	
-	triggers = [
+	triggers = CK2Definition([
 		("has_stapomog_portrait","=",[
 			("OR","=",[
 				("trait","=","portrait_" + person) for person in people
 			])
 		])
-	]
+	])
 	
 	efile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["SCRIPTED_EFFECTS"])
-	with open(efile,"w") as effects_file:
-		effects_file.write(topdx(effects))
+	effects.write(efile,format="ck2")
 		
 	tfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["SCRIPTED_TRIGGERS"])
-	with open(tfile,"w") as trigger_file:
-		trigger_file.write(topdx(triggers))
+	triggers.write(tfile,format="ck2")
 		
 		
 		
