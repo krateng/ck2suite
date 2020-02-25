@@ -103,6 +103,22 @@ class CK2Definition:
 		return raw
 		
 		
+	def getall(self,scope):
+		entries = [element for element in self.data if element[0] == scope]
+		return CK2Definition(entries)
+		
+	def getfirst(self,scope):
+		entries = [element for element in self.data if element[0] == scope]
+		try:
+			first = entries[0]
+			if isinstance(first[2],list):
+				return CK2Definition(first[2])
+			else:
+				return first[1],first[2]
+		except:
+			return None
+		
+		
 
 
 
