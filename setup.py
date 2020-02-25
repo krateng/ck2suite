@@ -1,15 +1,16 @@
 import setuptools
 import importlib
 
-module = importlib.import_module(setuptools.find_packages()[0])
-pkginfo = module.__pkginfo__
+packagename = setuptools.find_packages()[0]
+#module = importlib.import_module(packagename)
+pkginfo = importlib.import_module(".__pkginfo__",package=packagename)
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name=pkginfo.name,
-    version=".".join(str(n) for n in module.version),
+    version=".".join(str(n) for n in pkginfo.version),
     author=pkginfo.author["name"],
     author_email=pkginfo.author["email"],
     description=pkginfo.desc,
