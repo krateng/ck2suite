@@ -143,25 +143,23 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	if "modinfo.yml" in srcfiles: srcfiles.pop("modinfo.yml")
 	if "./modinfo.yml" in srcfiles: srcfiles.pop("./modinfo.yml")
 	
-	# check which files are new / changed / removed
-	changed_files = [f for f in srcfiles if f not in modinfo["times"] or modinfo["times"][f] != srcfiles[f]]
+	
+	# check changed / removed files
 	removed_files = [f for f in modinfo["results"] if f not in srcfiles]
-	
-	
-	# if anything has been changed, we need to load all data!
-	if len(changed_files) > 0:
-		data = {}
-		for f in srcfiles:
-			if f.split(".")[-1].lower() in YML_FILE_EXTENSIONS:
-				with open(f,"r") as ymlfile:
-					content = yaml.safe_load(ymlfile.read())
-				if "data" in content: data.update(content["data"])
-				
+	changed_files = [f for f in srcfiles if f not in modinfo["times"] or modinfo["times"][f] != srcfiles[f]]
 
 	
+	# has any data changed?
+	data_changed = any((f.split(".")[-1].lower() in DATA_FILE_EXTENSIONS) for f in changed_files + removed_files)
+	
+	# clear data files from the file lists (we don't convert them directly into mod files)
+	removed_files = [f for f in removed_files if f.split(".")[-1].lower() not in DATA_FILE_EXTENSIONS]
+	changed_files = [f for f in changed_files if f.split(".")[-1].lower() not in DATA_FILE_EXTENSIONS]
+	
+	# if data has changed, all suv files need to be reevaluated
+	if data_changed: changed_files = list(set(changed_files + [f for f in srcfiles if f.split(".")[-1].lower() in SUV_FILE_EXTENSIONS]))
 	
 	
-	# deal with individual files
 	
 	
 	for f in removed_files:
@@ -172,6 +170,28 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 			except FileNotFoundError:
 				pass
 		modinfo["results"].pop(f)
+	
+	
+	
+	
+	# if we evaluate any suv files (bc they have changed OR data itself has been changed), we need to load all data!
+	if any(f.split(".")[-1].lower() in SUV_FILE_EXTENSIONS for f in changed_files):
+		
+		data = {}
+		for f in srcfiles:
+			if f.split(".")[-1].lower() in DATA_FILE_EXTENSIONS:
+				with open(f,"r") as ymlfile:
+					content = yaml.safe_load(ymlfile.read())
+				if "data" in content:
+					data.update(content["data"])
+					print("Loaded data from",col["purple"](f))
+					modinfo["times"][f] = srcfiles[f]
+				
+
+	
+
+	
+	# parse all the files	
 	for f in changed_files:
 	
 		# get all files that have been created from this file
@@ -189,7 +209,6 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 			target = os.path.join(trgtfolder,relativepath)
 			os.makedirs(os.path.dirname(target),exist_ok=True)
 			shutil.copyfile(f,target)
-			modinfo["times"][f] = srcfiles[f]
 			new_createdfiles.append(f)
 		else:
 			
@@ -218,7 +237,6 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
 						print("\tCreating",col["green"](target))
 						new_createdfiles.append(target)
-						modinfo["times"][f] = srcfiles[f]
 						with open(fulltarget,"w") as tf:
 							tf.write("\n".join(entries[folder]))
 					else:
@@ -234,7 +252,6 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
 						print("\tCreating",col["green"](target))
 						new_createdfiles.append(target)
-						modinfo["times"][f] = srcfiles[f]
 						with open(fulltarget,"w") as tf:
 							tf.write(individual_files[target])
 					else:
@@ -242,7 +259,9 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 					
 			else:
 				print("File",col["red"](f),"will be ignored...")
+				
 		
+		modinfo["times"][f] = srcfiles[f]
 		modinfo["results"][f] = list(set(new_createdfiles))
 		for fr in [fil for fil in old_createdfiles if fil not in new_createdfiles]:
 			print("Removing",col["red"](fr),"as its no longer created by source",col["red"](f))
@@ -292,23 +311,29 @@ def process_txt_file(content):
 	
 # text files with additional logic
 def process_suv_file(content,data):
-	from .ck2parse import nested_tokens, tokenize, parse, topdx
+	from .ck2file import CK2Definition
 	from .suvfile import suv_eval
 	
-	t = parse(nested_tokens(tokenize(content)))
+	t = CK2Definition(content)
 	datastack = DictStack(data)
-	result = list(suv_eval(t,datastack))
-	return process_txt_file(topdx(result)) # for now
+	result = list(suv_eval(t.data,datastack))
+	r = CK2Definition(result)
+	return process_txt_file(r.generate(format="ck2")) # for now
 
 	
 	
 # yml files
 def process_svy_file(content):
 
-	from .ck2parse import dict_convert, topdx
+	from .ck2file import CK2Definition
 	
-	data = dict_convert(yaml.safe_load(content))
-	return process_txt_file(topdx(data)) #for now
+	keepaslist = [
+		("on_actions",None,"events"),
+		("traits",None,"opposites")
+	]
+	
+	r = CK2Definition(yaml.safe_load(content))
+	return process_txt_file(r.generate(format="ck2")) #for now
 	
 	
 	
