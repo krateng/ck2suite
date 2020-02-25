@@ -1,8 +1,8 @@
 import setuptools
 import importlib
 
-packagename = setuptools.find_packages()[0]
-#module = importlib.import_module(packagename)
+packagename = "vermeer"
+module = importlib.import_module(packagename)
 pkginfo = importlib.import_module(".__pkginfo__",package=packagename)
 
 with open("README.md", "r") as fh:
@@ -18,7 +18,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/" + pkginfo.author["github"] + "/" + pkginfo.name,
-    packages=setuptools.find_packages(),
+    packages=[packagename],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
