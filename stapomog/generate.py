@@ -7,6 +7,8 @@ from io import BytesIO
 import yaml
 import random
 
+from pprint import pprint
+
 from doreah.control import mainfunction
 from doreah.io import col
 
@@ -149,46 +151,60 @@ def combine_frames(portraits):
 ### GENERATE SPRITES
 def create_sprites(layers,moddir):
 	sprites = {}
+	sprites_to_files = {}
 
+	
+	i = 0
+	for layer in layers:
+		filename = GLOBALCONFIG["MOD_FILES"]["SPRITES"].format(idx=i)	
+		fullpath = os.path.join(moddir,filename)
+		spritename = GLOBALCONFIG["SPRITE_NAME"].format(idx=i)
+		sprites[spritename] = [None] * (len(layer) + 1)
+		sprites_to_files[spritename] = filename
+		
+		img = Image.new("RGBA",(152*(len(layer)+1),152))
+		j = 0
+		for frame in layer:
+			j += 1
+			img.paste(frame["img"],(j * 152,0))
+			frame["sprite"] = (spritename,j)
+			sprites[spritename][j] = frame
+		
+		
+		#spritefile.write(template_sprite.format(reference=spritename,filename=filename.replace("/",r"\\"),frames=len(layer)+1))
+		
+		if USERCONFIG["ALSO_SAVE_PNG"]:
+			png_filename = os.path.splitext(fullpath)[0] + ".png"
+			img.save(png_filename)	
+		
+		# convert to wand (pillow has no DDS)
+		tmp = BytesIO()
+		img.save(tmp,format="png")
+		tmp.seek(0)
+		wand_img = WandImage(file=tmp)
+		wand_img.compression = 'dxt5'
+		wand_img.save(filename=fullpath)
+		
+		i += 1
+
+
+	sprite_defs = [
+		("spriteTypes","=",[
+			("spriteType","=",[
+				("name","=",sprite),
+				("texturefile","=",sprites_to_files[sprite].replace("/",r"\\")),
+				("noOfFrames","=",len(sprites[sprite])),
+				("norefcount","=","yes"),
+				("can_be_lowres","=","yes")
+			])
+			for sprite in sprites
+		])
+	]
+	
+	
 	spfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["PORTRAIT_SPRITES_DEFINITION"])
 	with open(spfile,"w") as spritefile:
-
-		spritefile.write("spriteTypes = {")
-
-		i = 0
-		for layer in layers:
-			filename = GLOBALCONFIG["MOD_FILES"]["SPRITES"].format(idx=i)
-			fullpath = os.path.join(moddir,filename)
-			spritename = GLOBALCONFIG["SPRITE_NAME"].format(idx=i)
-			sprites[spritename] = [None] * (len(layer) + 1)
-			
-			img = Image.new("RGBA",(152*(len(layer)+1),152))
-			j = 0
-			for frame in layer:
-				j += 1
-				img.paste(frame["img"],(j * 152,0))
-				frame["sprite"] = (spritename,j)
-				sprites[spritename][j] = frame
-			
-			
-			spritefile.write(template_sprite.format(reference=spritename,filename=filename.replace("/",r"\\"),frames=len(layer)+1))
-			
-			if USERCONFIG["ALSO_SAVE_PNG"]:
-				png_filename = os.path.splitext(fullpath)[0] + ".png"
-				img.save(png_filename)	
-			
-			# convert to wand (pillow has no DDS)
-			tmp = BytesIO()
-			img.save(tmp,format="png")
-			tmp.seek(0)
-			wand_img = WandImage(file=tmp)
-			wand_img.compression = 'dxt5'
-			wand_img.save(filename=fullpath)
-			
-			i += 1
-
-		
-		spritefile.write("}")
+		spritefile.write(topdx(sprite_defs))
 	
 	return sprites
 	
@@ -325,7 +341,10 @@ def create_traits(people,moddir):
 		("portrait_" + person,"=",[
 			("customizer","=","no"),
 			("random","=","no"),
-			("hidden","=","yes")	
+			("hidden","=","yes"),
+			("opposites","=",[
+				"portrait_" + t for t in people if t != person
+			])	
 		]) for person in sorted(people)
 	]
 

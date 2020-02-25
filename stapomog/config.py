@@ -34,16 +34,22 @@ if "GAME_FOLDER" not in USERCONFIG:
 if "ALSO_SAVE_PNG" not in USERCONFIG:
 	USERCONFIG["ALSO_SAVE_PNG"] = True
 if "USE_SOCIETY_OVERRIDE" not in USERCONFIG:
-	USERCONFIG["USE_SOCIETY_OVERRIDE"] = False
+	USERCONFIG["USE_SOCIETY_OVERRIDE"] = True
 if "CREATE_MOD_FILE" not in USERCONFIG:
 	USERCONFIG["CREATE_MOD_FILE"] = True
 if "FLAG_TO_SHOW_ASSIGN_DECISIONS" not in USERCONFIG:
 	USERCONFIG["FLAG_TO_SHOW_ASSIGN_DECISIONS"] = "debug_stapomog"
+	
+	
+
 		
 
 ### save config
 with open(packageutils.pkgdata("conf.yml"),"w") as conffile:
 	conffile.write(yaml.dump(USERCONFIG))
+	
+# current forced settings
+USERCONFIG["USE_SOCIETY_OVERRIDE"] = True
 	
 
 if not os.path.exists(USERCONFIG["GAME_FOLDER"]):
