@@ -4,8 +4,5 @@
 *.note
 *.xcf
 nohup.out
-
-# test
-/raw_portraits
-/stapomog_portrait_mod
-*.mod
+/suvorov
+/vermeer

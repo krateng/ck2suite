@@ -14,14 +14,14 @@ Install with `pip install stapomog`. Make sure to use `pip3` if Python 3 isn't y
 
 ## Use
 
-Copy all your image files into a folder. There's no need to crop them into circles, but make sure your character's face is somewhat centered. Name the files following the pattern `name_agerange_trait.ext`. Everything after the first dot is ignored, so you can have multiple files with the same attributes.
+Copy all your image files into a folder (you can use arbitrary subfolders for organization). There's no need to crop them into circles, but make sure your character's face is somewhat centered. Name the files following the pattern `name_agerange_trait.ext`. Everything after the first dot is ignored, so you can have multiple files with the same attributes.
 
 Example:
 
 	hannah_20-30.png # will be used for the "hannah" portrait between ages 20 and 30
 	steve_mid.jpg	# will be used for the "steve" portrait for middle age (30-49)
 	mike_35-40.alternate.jpeg # will be used for the "mike" portrait between ages 35 and 40
-	emily_-30_fair.png # will be used for the "emily" portrait up to age 30 if she's fair
+	emily_-30_fair.png # will be used for the "emily" portrait up to age 30 if she's attractive
 	tiffany.jpg # will be used for the "tiffany" portrait at any age
 	gilly_young_wilding.png # will be used for the "gilly" portrait for young age (16-29) if she has the "wildling" trait
 	

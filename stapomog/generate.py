@@ -4,7 +4,7 @@ from wand.image import Image as WandImage
 from zipfile import ZipFile
 import re
 from io import BytesIO
-import yaml
+import oyaml as yaml
 import random
 
 from doreah.control import mainfunction
@@ -15,6 +15,7 @@ from .templates import *
 from .utils import interpret
 
 from suvorov.ck2file import CK2Definition
+import vermeer.library
 
 
 
@@ -22,20 +23,28 @@ from suvorov.ck2file import CK2Definition
 
 ### PREPARATIONS
 
-# predefine mask
-CIRCLEMASK = Image.new("L", (152,152), 0)
-draw = ImageDraw.Draw(CIRCLEMASK)
-draw.ellipse((0, 0, 152, 152), fill=255)
-EMPTY = Image.new("RGBA", (152,152), 0)
-
 # regex for portrait files
 regex_portraitfile = re.compile(r"[0-9]*_?portraits+(" + "|".join(["_" + s for s in GLOBALCONFIG["GFX_CULTURES"]] + [""]) + ")(" + "|".join(["_" + s for s in GLOBALCONFIG["GFX_AGES"]] + [""]) + ").gfx")
 
 
+def console_output(msg):
+
+	def decorator(func):
+		def wrapper(*args,**kwargs):
+			print(msg, end="")
+			try:
+				res = func(*args,**kwargs)
+				print(col["green"](" OK"))
+				return res
+			except:
+				print(col["red"](" FAILURE"))
+				raise
+		return wrapper
+	return decorator
 
 
 
-def create_mod(inputdir,moddir):
+def create_mod(inputdir,moddir,mtimes={}):
 
 	#create directory structure
 	for directory in [os.path.dirname(f) for t,f in GLOBALCONFIG["MOD_FILES"].items()] + [f for t,f in GLOBALCONFIG["MOD_FOLDERS"].items()]:
@@ -43,7 +52,7 @@ def create_mod(inputdir,moddir):
 		
 		
 	# read portraits
-	portraits = read_raw_portraits(inputdir)
+	portraits = read_raw_portraits(inputdir,mtimes)
 	
 	# create layers
 	layers = combine_frames(portraits)
@@ -67,14 +76,16 @@ def create_mod(inputdir,moddir):
 	create_macros(people,moddir)
 		
 	create_documentation(people,moddir)
-	create_metadata(moddir,inputdir)
+	create_metadata(moddir,inputdir,mtimes)
 
 
 
 
 ### READ ALL INDIVIDUAL PORTRAITS
-def read_raw_portraits(folder):
+@console_output("Loading portrait files...")
+def read_raw_portraits(folder,mtimes={}):
 	portraits = []
+
 
 	
 	#for f in os.listdir(folder):
@@ -82,6 +93,9 @@ def read_raw_portraits(folder):
 		dirs[:] = [d for d in dirs if not d.startswith(".")]
 		for f in files:
 			if f.split(".")[-1].lower() in GLOBALCONFIG["IMAGE_EXTENSIONS"]:
+				fullpath = os.path.join(pth,f)
+				
+				
 				rawname = f.split(".")[0]
 				name,agerangeraw,trait, *_ = rawname.split("_") + ["","",""]
 				
@@ -91,33 +105,30 @@ def read_raw_portraits(folder):
 				
 				if trait == "": trait = None
 				
-				
-				img = Image.open(os.path.join(folder,pth,f))
-				# SCALE
-				width, height = img.width, img.height
-				scale = 152 / min(width,height)
-				if scale != 1:
-					img = img.resize((int(scale*width),int(scale*height)))
-				# CROP TO SQUARE
-				width, height = img.width, img.height
-				left_offset = (width - 152) / 2
-				top_offset = (height - 152) / 2
-				img = img.crop((left_offset,top_offset,152+left_offset,152+top_offset))
-				# CROP TO CIRCLE
-				img = Image.composite(img,EMPTY,CIRCLEMASK)
+				modtime = int(os.path.getmtime(fullpath))
+				mtimes[f] = modtime # path doesn't matter, if the file is named the same, it will be interpreted the same
+				img = load_portrait(fullpath)
 				
 					
 				
 				portraits.append({"name":name,"ages_num":agerange,"ages_group":portrait_ranges,"trait":trait,"img":img})
 				#img.show()
 	#print(portraits)
+	#print(mtimes)
 	
 	return portraits
 
 
+def load_portrait(filename):
+	img = vermeer.library.load_from_file(filename)
+	img = vermeer.library.crop(img)
+	
+	return img
+
 
 
 ### COMBINE FRAMES TO LAYERS
+@console_output("Combining frames...")
 def combine_frames(portraits):
 	layers = []
 
@@ -147,6 +158,7 @@ def combine_frames(portraits):
 
 
 ### GENERATE SPRITES
+@console_output("Building sprites...")
 def create_sprites(layers,moddir):
 	sprites = {}
 	sprites_to_files = {}
@@ -160,25 +172,21 @@ def create_sprites(layers,moddir):
 		sprites[spritename] = [None] * (len(layer) + 1)
 		sprites_to_files[spritename] = filename
 		
-		img = Image.new("RGBA",(152*(len(layer)+1),152))
+
+	
 		j = 0
 		for frame in layer:
 			j += 1
-			img.paste(frame["img"],(j * 152,0))
 			frame["sprite"] = (spritename,j)
 			sprites[spritename][j] = frame
 		
+		img = vermeer.library.combine(*[frame["img"] for frame in layer],lead_empty=1)
+		
 		if USERCONFIG["ALSO_SAVE_PNG"]:
 			png_filename = os.path.splitext(fullpath)[0] + ".png"
-			img.save(png_filename)	
-		
-		# convert to wand (pillow has no DDS)
-		tmp = BytesIO()
-		img.save(tmp,format="png")
-		tmp.seek(0)
-		wand_img = WandImage(file=tmp)
-		wand_img.compression = 'dxt5'
-		wand_img.save(filename=fullpath)
+			vermeer.library.write_to_png_file(img,png_filename)	
+				
+		vermeer.library.write_to_dds_file(img,fullpath)
 		
 		i += 1
 
@@ -205,6 +213,7 @@ def create_sprites(layers,moddir):
 	
 
 ### DEFINE SOCIETY OVERRIDES
+@console_output("Creating portrait definitions...")
 def create_society_overrides(sprites,moddir):
 
 
@@ -328,6 +337,7 @@ def create_portrait_properties(sprites,moddir):
 
 
 # create traits
+@console_output("Creating traits...")
 def create_traits(people,moddir):
 
 	traits = CK2Definition([
@@ -346,6 +356,7 @@ def create_traits(people,moddir):
 		
 
 # create decisions
+@console_output("Creating assign interactions...")
 def create_decisions(people,moddir):
 
 	decisions = CK2Definition([
@@ -369,6 +380,7 @@ def create_decisions(people,moddir):
 	dfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["DECISIONS"])
 	decisions.write(dfile,format="ck2")
 		
+@console_output("Creating macros...")
 def create_macros(people,moddir):
 
 	effects = CK2Definition([
@@ -390,7 +402,7 @@ def create_macros(people,moddir):
 		
 	tfile = os.path.join(moddir,GLOBALCONFIG["MOD_FILES"]["SCRIPTED_TRIGGERS"])
 	triggers.write(tfile,format="ck2")
-		
+
 		
 		
 		
@@ -404,11 +416,12 @@ def create_documentation(people,moddir):
 			
 			
 
-def create_metadata(moddir,inputdir):
+def create_metadata(moddir,inputdir,mtimes={}):
 	mfile = os.path.join(moddir,"stapomog.yml")
 	with open(mfile,"w") as metafile:
 		metafile.write(yaml.dump({
-			"picture_source":os.path.abspath(inputdir)
+			"picture_source":os.path.abspath(inputdir),
+			"mtimes":mtimes
 		}))
 		
 
@@ -434,8 +447,9 @@ def main(inputdir):
 		print("Found existing mod, updating...")
 		with open(os.path.join(inputdir,"stapomog.yml")) as metafile:
 			meta = yaml.safe_load(metafile.read())
+		if not "mtimes" in meta: meta["mtimes"] = {}
 		if os.path.exists(meta["picture_source"]):
-			create_mod(meta["picture_source"],inputdir)
+			create_mod(meta["picture_source"],inputdir,mtimes=meta["mtimes"])
 			print("Your mod can be found in",col["yellow"](inputdir))
 		else:
 			print("Original picture source could not be found.")
