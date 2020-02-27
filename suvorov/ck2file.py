@@ -2,6 +2,7 @@
 
 import io
 import collections.abc
+import os
 
 import yaml
 
@@ -10,6 +11,7 @@ pdx_conversions = {
 	True:"yes",
 	False:"no"
 }
+ck2enc = "cp1252"
 
 class CK2Definition:
 
@@ -25,7 +27,7 @@ class CK2Definition:
 	def __init__(self,inp,format=None):
 	
 		# FILE REFERENCE -> Guess format, get File handle
-		if isinstance(inp,str):
+		if isinstance(inp,str) and os.path.isfile(inp):
 			formats = {
 				"txt":"ck2",
 				"yml":"yml",
@@ -35,7 +37,7 @@ class CK2Definition:
 			if format is None:
 				if ext in formats:
 					format = formats[ext]
-			with open(inp,"r") as fi:
+			with open(inp,"r",encoding=ck2enc) as fi:
 				self.__init__(fi,format=format)
 				
 		# FILE HANDLE -> Extract Object
@@ -43,11 +45,15 @@ class CK2Definition:
 			raw = inp.read()
 
 			if format == "ck2":
-				tokens = _tokenize(raw)
-				nested = _nested_tokens(tokens)
-				self.__init__(_parse(nested))
+				self.__init__(raw)
 			elif format == "yml":
 				self.__init__(yaml.safe_load(raw))
+				
+		# RAW TEXT -> Convert to object
+		elif isinstance(inp,str):
+			tokens = _tokenize(inp)
+			nested = _nested_tokens(tokens)
+			self.__init__(_parse(nested))
 		
 		# OBJECT -> covert to native list
 		elif isinstance(inp,collections.abc.Mapping):
@@ -58,7 +64,7 @@ class CK2Definition:
 
 	def write(self,f,format="ck2"):
 		if isinstance(f,str):
-			with open(f,"w") as fi:
+			with open(f,"w",encoding=ck2enc) as fi:
 				self.write(fi,format=format)
 		elif isinstance(f,io.IOBase):
 			f.write(self.generate(format))
@@ -156,17 +162,31 @@ def _nested_tokens(tokens):
 def _tokenize(txt):
 	buffer = ""
 	comment = False
+	string = False
 	for char in txt:
+		# eol ends comment
 		if comment and char in ["\n"]:
 			comment = False
+		# skip all comment content
 		elif comment:
 			pass
+		# string end
+		elif char == string:
+			string = False
+		# in string, just add all characters
+		elif string:
+			buffer += char
+		# comment begin
 		elif char in ["#"]:
 			comment = True
-			
+		# string begin
+		elif char in ["'",'"'] and not string:
+			string = char
+		# delimiter
 		elif char in [" ","\t","\n"]:
 			if buffer != "": yield buffer
 			buffer = ""
+		# delimiter, but also a token
 		elif char in ["{","}"]:
 			if buffer != "": yield buffer
 			buffer = ""

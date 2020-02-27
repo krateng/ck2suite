@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import yaml
+import csv
 import re
 from doreah.io import col, ask
 from doreah.datatypes import DictStack
@@ -38,7 +39,8 @@ scope_types = {
 	"scripted_effects":("common/scripted_effects",False),
 	"scripted_triggers":("common/scripted_triggers",False),
 	"mercenaries":("common/mercenaries",False),
-	"characters":("history/characters",False)
+	"characters":("history/characters",False),
+	"death":("common/death",False)
 }
 
 scope_types_separate_files = {
@@ -219,12 +221,14 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 				if ext in TXT_FILE_EXTENSIONS:
 					with open(f) as fh:
 						entries,individual_files = process_txt_file(fh.read())
+						loc_keys = {}
 				#elif ext in YML_FILE_EXTENSIONS:
 				#	with open(f) as fh:
 				#		entries,individual_files = process_svy_file(fh.read())
+				#		loc_keys = {}
 				if ext in SUV_FILE_EXTENSIONS:
 					with open(f) as fh:
-						entries,individual_files = process_suv_file(fh.read(),data)
+						entries,individual_files,loc_keys = process_suv_file(fh.read(),data)
 				
 				
 				for folder in entries:
@@ -256,6 +260,23 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 							tf.write(individual_files[target])
 					else:
 						print("\tDid not create",col["red"](target))
+						
+						
+				if len(loc_keys) != 0:
+					target = os.path.join("localisation",identifier + ".csv")
+					fulltarget = os.path.join(trgtfolder,target)
+					os.makedirs(os.path.join(trgtfolder,"localisation"),exist_ok=True)
+					canown = (not os.path.exists(fulltarget)) or (target in modinfo["results"].get(f,[]))
+					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
+						print("\tCreating",col["green"](target))
+						new_createdfiles.append(target)
+						with open(fulltarget,"w") as tf:
+							writer = csv.writer(tf,delimiter=";")
+							for key in loc_keys:
+								writer.writerow([key] + [loc_keys[key]] * 5 + [""] * 8 + ["x"])
+					else:
+						print("\tDid not create",col["red"](target))
+					
 					
 			else:
 				print("File",col["red"](f),"will be ignored...")
@@ -314,11 +335,14 @@ def process_suv_file(content,data):
 	from .ck2file import CK2Definition
 	from .suvfile import suv_eval
 	
+	localisation = {}
+	
 	t = CK2Definition(content)
 	datastack = DictStack(data)
-	result = list(suv_eval(t.data,datastack))
+	result = list(suv_eval(t.data,datastack,loc_keys=localisation))
+	#print(localisation)
 	r = CK2Definition(result)
-	return process_txt_file(r.generate(format="ck2")) # for now
+	return process_txt_file(r.generate(format="ck2")) + (localisation,) # for now
 
 	
 	

@@ -3,7 +3,7 @@ import os
 import shutil
 import yaml
 from doreah.io import col
-from .conf import VANILLAMODFOLDER, SUVOROVMODFOLDER, CK2USERFOLDER
+from .conf import VANILLAMODFOLDER, SUVOROVMODFOLDER, CK2USERFOLDER, PERMISSIONS
 from .convert import build_mod, delete_mod
 
 try:
@@ -51,9 +51,19 @@ def parse_mods():
 		with open(os.path.join(CK2USERFOLDER,"suvorovnew.yml"),"w") as suvorovfile:
 			yaml.dump(mods,suvorovfile)
 		shutil.move(os.path.join(CK2USERFOLDER,"suvorovnew.yml"),os.path.join(CK2USERFOLDER,"suvorov.yml"))
+		
+	for dirpath, dirnames, filenames in os.walk(SUVOROVMODFOLDER):
+		os.chown(dirpath,PERMISSIONS.st_uid,PERMISSIONS.st_gid)
+		for filename in filenames:
+		    os.chown(os.path.join(dirpath, filename),PERMISSIONS.st_uid,PERMISSIONS.st_gid)
 
 
-
-#while True:
+if __name__ == "__main__":
+	while True:
+		#with open("/home/krateng/TESTFILESERVICE.WAT","w") as f:
+		#	f.write("a")
+			
+		time.sleep(5)
+		parse_mods()
 	
-#	time.sleep(5)
+	

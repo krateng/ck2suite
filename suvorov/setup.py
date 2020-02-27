@@ -1,9 +1,9 @@
 import os
-from .conf import CK2USERFOLDER, SUVOROVMODFOLDER, SERVICEUNITFILE
+from .conf import CK2USERFOLDER, SUVOROVMODFOLDER, SERVICEUNITFILE, PERMISSIONS
 
 unitfilecontent = """
 [Unit]
-Description=Suvorov
+Description=suvorov
 
 [Service]
 Type=simple
@@ -17,12 +17,12 @@ WantedBy=multi-user.target
 def setup():
 
 	os.makedirs(SUVOROVMODFOLDER,exist_ok=True)
-	stat = os.stat(CK2USERFOLDER)
-	os.chown(SUVOROVMODFOLDER,stat.st_uid,stat.st_gid)
+	os.chown(SUVOROVMODFOLDER,PERMISSIONS.st_uid,PERMISSIONS.st_gid)
 	try:
 		os.makedirs(os.path.dirname(SERVICEUNITFILE),exist_ok=True)
 		with open(SERVICEUNITFILE,"w") as unitfile:
 			unitfile.write(unitfilecontent)
+		print("Service successfully installed.")
 	except PermissionError:
 		print("Please run as administrator.")
 		

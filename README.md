@@ -79,6 +79,31 @@ In case of `.suv` files, you can also use some basic templating:
 	}
 	
 The data source for these can be defined over any number of `.yaml` files in your mod under the top key `data`.
+
+`.suv` files allow you to localize things directly in their definition file - if you don't care about multilingual support, this is a nice way to further lower the amount of files and to keep things together:
+
+
+	traits = {
+		idol = {
+			@loc = "Idol"
+			@loc_desc = "This character is a K-Pop Idol."
+			sex_appeal_opinion = 70
+			intrigue = 1
+		}
+	}
+	
+	events = {
+		character_event = {
+			id = 31
+			desc = @loc:"An elephant demands audience with the King."
+			
+			option = {
+				name = @loc:"No"
+				add_trait = hates_elephants
+			}
+		}
+	
+	}
 	
 <!---
 You may also use yaml to define various things in `.yml` or `.svy` files, though this is hightly experimental. 'Keys' that appear multiple times must be specified as a list instead:
