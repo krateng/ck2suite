@@ -81,8 +81,8 @@ In case of `.suv` files, you can also use some basic templating:
 				@for = choice
 				@in = choices
 				option = {
-					name = $choice.name
-					change_$choice.attribute = 2
+					name = $$choice.name
+					change_$$choice.attribute = 2
 				}
 			}
 		}
@@ -116,11 +116,11 @@ data:
 	events = {
 		character_event = {
 			id = 31
-			desc = @loc:"An elephant demands audience with the King."
+			desc = @loc:"Your sister wants to become a K-Pop idol."
 			
 			option = {
-				name = @loc:"No"
-				add_trait = hates_elephants
+				name = @loc:"Nice"
+				FROM = { add_trait = idol }
 			}
 		}
 	

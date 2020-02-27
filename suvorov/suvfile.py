@@ -59,7 +59,7 @@ def get_var(name,data):
 	return result
 def sub_vars(name,data):
 	if isinstance(name,str):
-		l = re.split(r"\$(.*);?",name)
+		l = re.split(r"\$\$(.*);?",name)
 		for n in range(1,len(l),2):
 			l[n] = get_var(l[n],data)
 		return "".join(l)
