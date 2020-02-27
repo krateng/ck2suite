@@ -91,12 +91,12 @@ In case of `.suv` files, you can also use some basic templating:
 The data source for these can be defined over any number of `.yaml` files in your mod under the top key `data`, like this:
 
 ```yaml
-	data:
-	   choices:
-	   - name: "Use the dagger"
-	     attribute: "intrigue"
-	   - name: "Use the quill"
-	     attribute: "diplomacy"
+data:
+   choices:
+   - name: "Use the dagger"
+     attribute: "intrigue"
+   - name: "Use the quill"
+     attribute: "diplomacy"
 ```
 
 ### Inline localisation
