@@ -6,14 +6,65 @@ import os
 
 import yaml
 
+from . import ck2filefunctions as funcs
 
-pdx_conversions = {
-	True:"yes",
-	False:"no"
-}
+
 ck2enc = "cp1252"
 
-class CK2Definition:
+
+
+class CK2Base:
+	def __init__(self,inp,format=None):
+	
+		# FILE REFERENCE -> Guess format, get File handle
+		if isinstance(inp,str) and os.path.isfile(inp):
+			ext = inp.split(".")[-1].lower()
+			if format is None:
+				format = self.__class__.defaultformat
+				for f in self.__class__.formats:
+					if ext in self.__class__.formats[f]["extensions"]:
+						format = f
+			with open(inp,"r",encoding=ck2enc) as fi:
+				self.__init__(fi,format=format)
+				
+		# FILE HANDLE -> Extract String
+		elif isinstance(inp,io.TextIOBase):
+			raw = inp.read()
+			self.__init__(raw,format=format)
+				
+		# RAW TEXT -> handle
+		elif isinstance(inp,str):
+			parsed = self.__class__.formats[format]["handler"](inp)
+			self.__init__(parsed)
+		
+		# OBJECT -> convert
+		else:
+			if isinstance(inp,collections.abc.Mapping):
+				self.__init_from_mapping__(inp)
+			elif isinstance(inp,collections.abc.Sequence):
+				self.__init_from_sequence__(inp)
+					
+	def write(self,outp,format=None):
+		if isinstance(outp,str):
+			ext = outp.split(".")[-1].lower()
+			if format is None:
+				for f in self.__class__.formats:
+					if ext in self.__class__.formats[f]["extensions"]:
+						format = f
+			with open(outp,"w",encoding=ck2enc) as fi:
+				self.write(fi,format=format)
+		elif isinstance(outp,io.TextIOBase):
+			outp.write(self.generate(format=format))
+			
+	def print(self,format=None):
+		print(self.generate(format=format))
+			
+	def generate(self,format=None):
+		if format is None: format = self.__class__.defaultformat
+		return self.__class__.formats[format]["generator"](self.data)
+		
+
+class CK2Definition(CK2Base):
 
 	"""
 	Each scope is represented by a list. Its entries are 
@@ -23,90 +74,19 @@ class CK2Definition:
 
 	"""
 
-
-	def __init__(self,inp,format=None):
+	formats = {
+		"ck2":{"extensions":["txt","suv"],"handler":funcs.parse_ck2,"generator":funcs.topdx },		# ck2 text files
+		"yml":{"extensions":["yml","yaml"],"handler":yaml.safe_load},					# yaml file
+	}
+	defaultformat = "ck2"
 	
-		# FILE REFERENCE -> Guess format, get File handle
-		if isinstance(inp,str) and os.path.isfile(inp):
-			formats = {
-				"txt":"ck2",
-				"yml":"yml",
-				"yaml":"yml"
-			}
-			ext = inp.split(".")[-1].lower()
-			if format is None:
-				if ext in formats:
-					format = formats[ext]
-			with open(inp,"r",encoding=ck2enc) as fi:
-				self.__init__(fi,format=format)
-				
-		# FILE HANDLE -> Extract Object
-		elif isinstance(inp,io.IOBase):
-			raw = inp.read()
-
-			if format == "ck2":
-				self.__init__(raw)
-			elif format == "yml":
-				self.__init__(yaml.safe_load(raw))
-				
-		# RAW TEXT -> Convert to object
-		elif isinstance(inp,str):
-			tokens = _tokenize(inp)
-			nested = _nested_tokens(tokens)
-			self.__init__(_parse(nested))
+	def __init_from_mapping__(self,inp):
+		self.data = funcs.dict_convert(inp)
 		
-		# OBJECT -> covert to native list
-		elif isinstance(inp,collections.abc.Mapping):
-			self.data = _dict_convert(inp)
-			
-		elif isinstance(inp,collections.abc.Iterable):
-			self.data = inp
-
-	def write(self,f,format="ck2"):
-		if isinstance(f,str):
-			with open(f,"w",encoding=ck2enc) as fi:
-				self.write(fi,format=format)
-		elif isinstance(f,io.IOBase):
-			f.write(self.generate(format))
-			
-	def print(self,format="ck2"):
-		print(self.generate(format=format))
-			
-	def generate(self,format="ck2"):
-		formats = {
-			"ck2":CK2Definition._topdx
-		}
-		return formats[format](self.data)
+	def __init_from_sequence__(self,inp):
+		self.data = inp
+		
 	
-	
-		
-	def _topdx(data,indent=0):
-		raw = ""
-
-		for t in data:
-			raw += "\t" * indent
-			if isinstance(t,tuple):
-				raw += t[0] + " " + t[1] + " "
-				if any(isinstance(t[2],ty) for ty in [str,int,float,bool]):
-					for k in pdx_conversions:
-						if t[2] is k:
-							# need to do this cause 0 and 1 count as False and True for dict lookup
-							raw += pdx_conversions[t[2]]
-							break
-					else:
-						raw += str(t[2])
-				elif isinstance(t[2],collections.abc.Iterable):
-					raw +=  "{\n"
-					raw += CK2Definition._topdx(t[2],indent=indent+1)
-					raw += "\t" * indent
-					raw += "}"
-				raw += "\n"
-				
-			else:
-				raw += t
-				raw += "\n"
-		
-		return raw
 		
 		
 	def getall(self,scope):
@@ -126,93 +106,39 @@ class CK2Definition:
 		
 		
 
+class CK2Localisation(CK2Base):
+
+	formats = {
+		"ck2csv":{"extensions":["csv"],"handler":funcs.csv_to_internal,"generator":funcs.internal_to_csv},	# normal ck2 csv with ; delimiters and x in last row
+	}
+	defaultformat = "ck2csv"
+	languages = ("english","french","german",None,"spanish",None,None,None,None,None,None,None,None)
 
 
-# PDX FILE
+				
+	def __init_from_mapping__(self,inp,language="english"):
 	
-def _parse(tokens):
-	
-	l = []
-	
-	while len(tokens) >= 3:
-		if tokens[1] in ("=","==","<=","=<","<",">",">=","=>"):
-			l.append((tokens[0],tokens[1],tokens[2] if isinstance(tokens[2],str) else _parse(tokens[2])))
-			tokens = tokens[3:]
+		if any(isinstance(inp[key],tuple) for key in inp):
+			# internal dict structure
+			self.data = inp
 		else:
-			l.append(tokens[0])
-			tokens = tokens[1:]
-	
-	return l
-	
-def _nested_tokens(tokens):
-	stack = [[]]
-	for token in tokens:
-		if token == "{":
-			stack.append([])
-		elif token == "}":
-			t = stack.pop()
-			stack[-1].append(t)
-		else:
-			stack[-1].append(token)
-			
+			# simple mapping from key to text
+			self.data = {key: tuple((inp[key] if l==language else "") for l in CK2Localisation.languages) for key in inp}
 		
-	assert len(stack) == 1
-	return stack[-1]
-	
-def _tokenize(txt):
-	buffer = ""
-	comment = False
-	string = False
-	for char in txt:
-		# eol ends comment
-		if comment and char in ["\n"]:
-			comment = False
-		# skip all comment content
-		elif comment:
-			pass
-		# string end
-		elif char == string:
-			string = False
-		# in string, just add all characters
-		elif string:
-			buffer += char
-		# comment begin
-		elif char in ["#"]:
-			comment = True
-		# string begin
-		elif char in ["'",'"'] and not string:
-			string = char
-		# delimiter
-		elif char in [" ","\t","\n"]:
-			if buffer != "": yield buffer
-			buffer = ""
-		# delimiter, but also a token
-		elif char in ["{","}"]:
-			if buffer != "": yield buffer
-			buffer = ""
-			yield char
-		
-		else:
-			buffer += char
+	def __init_from_sequence__(self,inp):	
+		if all (isinstance(e,collections.abc.Mapping) for e in inp):
+			self.data = {e["key"]: tuple(e.get(l,"") for l in CK2Localisation.languages) for e in inp}
 			
-	if buffer != "": yield buffer
+		elif all (isinstance(e,collections.abc.Iterable) for e in inp):
+			self.data = {row[0]: tuple(row[1:]) for row in inp}
+			
 	
-	
-# DICT
+	def get_localisation(self,key,language="english"):
+		row = self.data.get(key)
+		loc = row[CK2Localisation.languages.index(language)]
+		if loc == "": loc = row[0]
+		return loc
 
-# takes dict and unpacks list etc according to pdx script rules
-def _dict_convert(d,keeplists=[]):
-	if not isinstance(d,dict): return d
-	l = []
-	for key,val in d.items():
-		keep = [e[1:] for e in keeplists if len(e)>0 and e[0] == key or e[0] is None]
-		if isinstance(val,list):
-			if (key,) in keeplists:
-				l.append((key,"=",val))
-			else:
-				# unfold list normally
-				for entry in val:
-					l.append((key,"=",dict_convert(entry,keeplists=keep)))
-		else:
-			l.append((key,"=",dict_convert(val,keeplists=keep)))
-	return l
+
+
+

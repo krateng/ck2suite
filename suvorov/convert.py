@@ -49,6 +49,8 @@ scope_types_separate_files = {
 }
 
 
+
+
 # build_mod: takes mod name, converts in standard directories
 # delete_mod: takes mod name, deletes in standard directories
 # convert_mod: takes actual source and target folder, converts
@@ -241,7 +243,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
 						print("\tCreating",col["green"](target))
 						new_createdfiles.append(target)
-						with open(fulltarget,"w") as tf:
+						with open(fulltarget,"w",encoding=ENCODING) as tf:
 							tf.write("\n".join(entries[folder]))
 					else:
 						print("\tDid not create",col["red"](target))
@@ -256,7 +258,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
 						print("\tCreating",col["green"](target))
 						new_createdfiles.append(target)
-						with open(fulltarget,"w") as tf:
+						with open(fulltarget,"w",encoding=ENCODING) as tf:
 							tf.write(individual_files[target])
 					else:
 						print("\tDid not create",col["red"](target))
@@ -270,7 +272,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 					if canown or ask("File "+col["yellow"](target)+" exists, but is not tied to this source file! Overwrite?"):
 						print("\tCreating",col["green"](target))
 						new_createdfiles.append(target)
-						with open(fulltarget,"w") as tf:
+						with open(fulltarget,"w",encoding=ENCODING) as tf:
 							writer = csv.writer(tf,delimiter=";")
 							for key in loc_keys:
 								writer.writerow([key] + [loc_keys[key]] * 5 + [""] * 8 + ["x"])
