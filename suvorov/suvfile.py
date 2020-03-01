@@ -5,13 +5,10 @@ def suv_eval(content,data,loc_keys=None,parent=None):
 
 	if loc_keys is None: loc_keys = {}
 	
-	# lists
-	if any(isinstance(e,str) for e in content):
-		for element in content:
-			yield element
+
 	
-	# normal expressions	
-	else:	
+	# normal expressions
+	try:	
 		for scope,operator,expression in content:
 			
 			scope = sub_vars(scope,data)
@@ -38,9 +35,10 @@ def suv_eval(content,data,loc_keys=None,parent=None):
 					expression = [e for e in expression if e[0] not in ("@for","@in")]
 					for entry in get_var(_in,data):
 						data.push({_for:entry})
+						#print(data)
 						yield from suv_eval(expression,data,loc_keys=loc_keys)
 						data.pop()
-				if cmd.startswith("loc:"):
+				elif cmd.startswith("loc:"):
 					# different than above! direct localisation of a given key
 					key = cmd[4:]
 					loc_keys[key] = expression
@@ -54,6 +52,11 @@ def suv_eval(content,data,loc_keys=None,parent=None):
 					expression = list(suv_eval(expression,data,loc_keys=loc_keys,parent=scope))
 				
 				yield scope,operator,expression
+	
+	# lists
+	except:
+		for element in content:
+			yield element
 			
 	#print(loc_keys)
 	
@@ -62,13 +65,14 @@ def get_var(name,data):
 	parts = name.split(".")
 	result = data
 	for p in parts:
-		result = result[p]
+		result = result.get(p) or []
 	return result
 def sub_vars(name,data):
 	if isinstance(name,str):
-		l = re.split(r"\$\$(.*);?",name)
+		l = re.split(r"\$\$([\.A-Za-z]*);?",name)
+		#print(name,"found",l)
 		for n in range(1,len(l),2):
 			l[n] = get_var(l[n],data)
-		return "".join(l)
+		return "".join(str(e) for e in l)
 	else:
 		return name	

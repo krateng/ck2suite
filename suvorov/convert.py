@@ -275,7 +275,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 						with open(fulltarget,"w",encoding=ENCODING) as tf:
 							writer = csv.writer(tf,delimiter=";")
 							for key in loc_keys:
-								writer.writerow([key] + [loc_keys[key]] * 5 + [""] * 8 + ["x"])
+								writer.writerow([key] + [loc_keys[key]] + [""] * 12 + ["x"])
 					else:
 						print("\tDid not create",col["red"](target))
 					

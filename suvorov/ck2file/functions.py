@@ -61,6 +61,7 @@ def tokenize(txt):
 			pass
 		# string end
 		elif char == string:
+			buffer += char
 			string = False
 		# in string, just add all characters
 		elif string:
@@ -71,6 +72,7 @@ def tokenize(txt):
 		# string begin
 		elif char in ["'",'"'] and not string:
 			string = char
+			buffer += char
 		# delimiter
 		elif char in [" ","\t","\n"]:
 			if buffer != "": yield buffer
