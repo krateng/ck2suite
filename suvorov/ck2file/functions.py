@@ -3,9 +3,13 @@ import io
 import collections.abc
 
 def parse_ck2(txt):
-	tokens = tokenize(inp)
+	tokens = tokenize(txt)
+	#print(tokens)
 	nested = nested_tokens(tokens)
-	return parse(nested)
+	#print(nested)
+	parsed = parse(nested)
+	#print(parsed)
+	return parsed
 	
 	
 def id(x):
@@ -19,8 +23,8 @@ def parse(tokens):
 	
 	l = []
 	
-	while len(tokens) >= 3:
-		if tokens[1] in ("=","==","<=","=<","<",">",">=","=>"):
+	while len(tokens) > 0:
+		if len(tokens) >= 3 and tokens[1] in ("=","==","<=","=<","<",">",">=","=>"):
 			l.append((tokens[0],tokens[1],tokens[2] if isinstance(tokens[2],str) else parse(tokens[2])))
 			tokens = tokens[3:]
 		else:

@@ -6,7 +6,7 @@ import os
 
 import yaml
 
-from . import ck2filefunctions as funcs
+from . import functions as funcs
 
 
 ck2enc = "cp1252"
@@ -29,11 +29,13 @@ class CK2Base:
 				
 		# FILE HANDLE -> Extract String
 		elif isinstance(inp,io.TextIOBase):
+			if format is None: format = self.__class__.defaultformat
 			raw = inp.read()
 			self.__init__(raw,format=format)
 				
 		# RAW TEXT -> handle
 		elif isinstance(inp,str):
+			if format is None: format = self.__class__.defaultformat
 			parsed = self.__class__.formats[format]["handler"](inp)
 			self.__init__(parsed)
 		
