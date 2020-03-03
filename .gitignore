@@ -1,8 +1,8 @@
 # generic temporary / dev files
 *.pyc
-*.sh
 *.note
 *.xcf
 nohup.out
-/suvorov
-/vermeer
+
+# testing
+/testing

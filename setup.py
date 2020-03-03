@@ -1,11 +1,21 @@
 import setuptools
 import importlib
+import sys
 
-packagename = "stapomog"
+packages = ["stapomog","suvorov","bierstadt"]
+
+packagename = sys.args.pop(1)
+assert packagename in pacakges
+
 module = importlib.import_module(packagename)
 pkginfo = importlib.import_module(".__pkginfo__",package=packagename)
 
-with open("README.md", "r") as fh:
+try:
+	ghname = pkginfo.links["github"]
+except:
+	ghname = pkginfo.name
+	
+with open(packagename + "/README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -17,7 +27,7 @@ setuptools.setup(
 	license="GPLv3",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/" + pkginfo.author["github"] + "/" + pkginfo.name,
+    url="https://github.com/" + pkginfo.author["github"] + "/" + ghname,
     packages=[packagename],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -35,6 +45,3 @@ setuptools.setup(
 		]
 	}
 )
-
-import os
-os.system("git tag v" + ".".join(str(n) for n in pkginfo.version))
