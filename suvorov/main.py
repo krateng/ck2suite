@@ -5,13 +5,13 @@ from doreah.control import mainfunction
 		
 	
 		
-@mainfunction({},shield=True)
-def main(command,*args):
+@mainfunction({"f":"force"},shield=True)
+def main(command,*args,force:bool=False):
 
 	if command == "setup":
 		setup()
 	elif command == "build":
 		if len(args) > 0:
-			build_mod(args[0])
+			build_mod(args[0],force=force)
 		else:
-			parse_mods()
+			parse_mods(force=force)

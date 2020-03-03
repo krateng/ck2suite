@@ -61,7 +61,7 @@ def tokenize(txt):
 			pass
 		# string end
 		elif char == string:
-			buffer += char
+			#buffer += char
 			string = False
 		# in string, just add all characters
 		elif string:
@@ -72,7 +72,7 @@ def tokenize(txt):
 		# string begin
 		elif char in ["'",'"'] and not string:
 			string = char
-			buffer += char
+			#buffer += char
 		# delimiter
 		elif char in [" ","\t","\n"]:
 			if buffer != "": yield buffer
@@ -124,13 +124,15 @@ def topdx(data,indent=0):
 		if isinstance(t,tuple):
 			raw += t[0] + " " + t[1] + " "
 			if any(isinstance(t[2],ty) for ty in [str,int,float,bool]):
+				
 				for k in pdx_conversions:
 					if t[2] is k:
 						# need to do this cause 0 and 1 count as False and True for dict lookup
 						raw += pdx_conversions[t[2]]
 						break
 				else:
-					raw += str(t[2])
+					if isinstance(t[2],str) and " " in t[2]: raw += '"' + t[2] + '"'
+					else: raw += str(t[2])
 			elif isinstance(t[2],collections.abc.Iterable):
 				raw +=  "{\n"
 				raw += topdx(t[2],indent=indent+1)

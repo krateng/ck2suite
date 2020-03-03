@@ -8,6 +8,9 @@ from doreah.io import col, ask
 from doreah.datatypes import DictStack
 
 from .conf import *
+from .ck2file.classes import CK2Definition
+
+from vermeer.library import load_from_file, write_to_dds_file, crop
 
 scope_types = {
 	"on_actions":("common/on_actions",False),
@@ -40,12 +43,17 @@ scope_types = {
 	"scripted_triggers":("common/scripted_triggers",False),
 	"mercenaries":("common/mercenaries",False),
 	"characters":("history/characters",False),
-	"death":("common/death",False)
+	"death":("common/death",False),
+	"objectives":("common/objectives",False)
 }
 
 scope_types_separate_files = {
 	"provinces":("history/provinces",),
 	"titles":("history/titles",)
+}
+
+gfx_types = {
+	"traits":("gfx/traits","traiticon")
 }
 
 
@@ -86,18 +94,18 @@ def get_top_scopes(txt):
 			
 
 # figures out folders and stuff and generates full mod
-def build_mod(modname):
+def build_mod(modname,force=False):
 
 	srcmodfolder = os.path.join(SUVOROVMODFOLDER,modname)	
 	
 	targetmodfolder = os.path.join(VANILLAMODFOLDER,"suvorov." + modname)
 	targetmodfile = os.path.join(VANILLAMODFOLDER,"suvorov." + modname + ".mod")
 	
-	return convert_mod(srcmodfolder,targetmodfolder,targetmodfile)
+	return convert_mod(srcmodfolder,targetmodfolder,targetmodfile,force=force)
 	
 	
 	
-def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
+def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None,force=False):
 
 	if modname == None: modname = os.path.basename(srcfolder)
 	
@@ -133,6 +141,7 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 		with open(os.path.join(trgtfolder,METAFILE)) as suvorovfile:
 			modinfo = yaml.safe_load(suvorovfile.read())
 		assert modinfo is not None and "times" in modinfo and "results" in modinfo
+		if force: modinfo["times"] = {f:0 for f in modinfo["times"]}
 	except:
 		modinfo = {"times":{},"results":{}}
 		
@@ -159,6 +168,9 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 	# clear data files from the file lists (we don't convert them directly into mod files)
 	removed_files = [f for f in removed_files if f.split(".")[-1].lower() not in DATA_FILE_EXTENSIONS]
 	changed_files = [f for f in changed_files if f.split(".")[-1].lower() not in DATA_FILE_EXTENSIONS]
+	
+	# we need to keep track if gfx files have been changed in order to recreate sprite definitions etc
+	changed_gfx_files = {f:False for f in gfx_types}
 	
 	# if data has changed, all suv files need to be reevaluated
 	if data_changed: changed_files = list(set(changed_files + [f for f in srcfiles if f.split(".")[-1].lower() in SUV_FILE_EXTENSIONS]))
@@ -190,13 +202,25 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 					data.update(content["data"])
 					print("Loaded data from",col["purple"](f))
 					modinfo["times"][f] = srcfiles[f]
-				
+					
 
+				
+	
 	
 
 	
 	# parse all the files	
 	for f in changed_files:
+	
+		# f is the path relative to the (suvorov) mod folder
+		# naming convention for below:
+		# 	relativepath		path relative to relevant suvorov-structural subfolder
+		#	target			file to be written relative to result mod folder
+		#	targetfolder		folder to be written inside relative to result mod folder
+		#	fulltarget		absolute path of target file
+		#	name			name of the file
+		#	rawname			name of the file without extensions
+		#	
 	
 		# get all files that have been created from this file
 		old_createdfiles = modinfo["results"].get(f) or []
@@ -207,13 +231,41 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 		fullpath = os.path.realpath(f)
 		#suvdir = os.path.realpath(SRCFOLDER)
 		vanilladir = os.path.realpath(VANILLASRCFOLDER)
-		if os.path.commonprefix([fullpath,vanilladir]) == vanilladir:
+		gfxdir = os.path.realpath(GFXSRCFOLDER)
+		
+		
+		# VANILLA FILE - COPY AS IS
+		if os.path.commonprefix([fullpath,vanilladir]) == vanilladir:		
 			relativepath = os.path.relpath(f,start=vanilladir)
 			print("Copying",col["green"](relativepath))
 			target = os.path.join(trgtfolder,relativepath)
 			os.makedirs(os.path.dirname(target),exist_ok=True)
 			shutil.copyfile(f,target)
 			new_createdfiles.append(f)
+			
+		
+		# GFX FILE - convert, add gfx definition file	
+		elif os.path.commonprefix([fullpath,gfxdir]) == gfxdir:
+			relativepath = os.path.relpath(f,start=gfxdir)
+			print("Loading GFX file",col["yellow"](relativepath))
+			folder,name = relativepath.split("/")
+			rawname = name.split(".")[0]
+			targetfolder,gfxtype = gfx_types[folder]
+			target = os.path.join(targetfolder,rawname + ".dds")
+			fulltarget = os.path.join(trgtfolder,target)
+			
+			img = load_from_file(fullpath)
+			img = crop(img,type=gfxtype)
+			print("\tCreating",col["green"](target))
+			os.makedirs(os.path.join(trgtfolder,targetfolder),exist_ok=True)
+			write_to_dds_file(img,fulltarget)
+			new_createdfiles.append(target)
+			
+			changed_gfx_files[folder] = True
+			
+		
+		
+		# DATA FILE - interpret, write in correct folders	
 		else:
 			
 			identifier = os.path.relpath(os.path.splitext(f)[0],start=SUVOROVSRCFOLDER).replace("/",".")
@@ -283,13 +335,39 @@ def convert_mod(srcfolder,trgtfolder,trgtfile,modname=None):
 			else:
 				print("File",col["red"](f),"will be ignored...")
 				
+				
+				
+		
+			
+				
 		
 		modinfo["times"][f] = srcfiles[f]
 		modinfo["results"][f] = list(set(new_createdfiles))
 		for fr in [fil for fil in old_createdfiles if fil not in new_createdfiles]:
 			print("Removing",col["red"](fr),"as its no longer created by source",col["red"](f))
 				
+	
+	
+	# GFX DEFINITIONS
+	if changed_gfx_files["traits"]:
+		sprites = []
+		for f in os.listdir(os.path.join(srcfolder,"gfx","traits")):
+			name = f.split(".")[0]	
+			sprites.append(("spriteType","=",[
+				("name","=","GFX_trait_" + name),
+				("texturefile","=","gfx\\\\traits\\\\" + name + ".dds"),
+				("noOfFrames","=",1),
+				("norefcount","=","yes"),
+				("effectFile","=","gfx/FX/buttonstate.lua")
+			]))
+		
+		defin = CK2Definition([("spriteTypes","=",sprites)])
 			
+		gfxfilefolder = os.path.join("interface")
+		gfxfile = os.path.join(gfxfilefolder,modname + "_svrvtraits.gfx")
+		os.makedirs(os.path.join(trgtfolder,gfxfilefolder),exist_ok=True)
+		print("Creating",col["green"](gfxfile))
+		defin.write(os.path.join(trgtfolder,gfxfile),format="ck2")
 			
 			
 	# print suvorov info data

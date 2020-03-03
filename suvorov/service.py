@@ -13,7 +13,7 @@ try:
 except:
 	mods = {}
 
-def parse_mods():
+def parse_mods(force=False):
 	actual_mods = {}
 	for folder in [f for f in os.listdir(SUVOROVMODFOLDER) if os.path.isdir(os.path.join(SUVOROVMODFOLDER,f))]:
 		#modificationtime = os.path.getmtime(os.path.join(SUVOROVMODFOLDER,folder))
@@ -27,7 +27,7 @@ def parse_mods():
 		if mod in actual_mods and mod not in mods:
 			# new mod detected
 			print(col["yellow"]("New mod detected: " + mod + " | Building..."))
-			build_mod(mod)
+			build_mod(mod,force=force)
 			mods[mod] = actual_mods[mod]
 			any_change = True
 		elif mod in mods and mod not in actual_mods:
@@ -39,7 +39,12 @@ def parse_mods():
 		elif actual_mods[mod] != mods[mod]:
 			# mod changed
 			print(col["yellow"]("Mod source changed on disk: " + mod + " | Building..."))
-			build_mod(mod)
+			build_mod(mod,force=force)
+			mods[mod] = actual_mods[mod]
+			any_change = True
+		elif force:
+			print(col["yellow"]("Forcing rebuild of mod: " + mod + " | Building..."))
+			build_mod(mod,force=force)
 			mods[mod] = actual_mods[mod]
 			any_change = True
 			
