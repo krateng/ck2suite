@@ -4,3 +4,8 @@
 *.note
 *.xcf
 nohup.out
+
+# testing
+/*.jpg
+/*.png
+/*.dds
