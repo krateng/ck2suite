@@ -4,5 +4,6 @@
 *.note
 *.xcf
 nohup.out
-testfile*
-/vermeer
+
+# testing
+/testing
