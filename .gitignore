@@ -6,7 +6,4 @@
 nohup.out
 
 # testing
-/*.jpg
-/*.jpeg
-/*.png
-/*.dds
+/testing

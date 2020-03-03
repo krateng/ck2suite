@@ -1,4 +1,4 @@
-name = "vermeer"
+name = "bierstadt"
 desc = "Library and command line tool to handle CK2 portrait files"
 author = {
 	"name":"Johannes Krattenmacher",
@@ -18,5 +18,5 @@ resources = [
 ]
 
 commands = {
-	"vermeer":"api:main"
+	"bierstadt":"cmd:main"
 }
