@@ -45,3 +45,4 @@ setuptools.setup(
 		]
 	}
 )
+
