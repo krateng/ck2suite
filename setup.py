@@ -14,7 +14,7 @@ try:
 	ghname = pkginfo.links["github"]
 except:
 	ghname = pkginfo.name
-	
+
 with open(packagename + "/README.md", "r") as fh:
     long_description = fh.read()
 
