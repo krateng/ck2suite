@@ -2,8 +2,8 @@
 
 [![](https://img.shields.io/pypi/v/stapomog?style=for-the-badge)](https://pypi.org/project/stapomog/)
 [![](https://img.shields.io/pypi/dm/stapomog?style=for-the-badge)](https://pypi.org/project/stapomog/)
-[![](https://img.shields.io/github/stars/krateng/stapomog?style=for-the-badge&color=purple)](https://github.com/krateng/stapomog/stargazers)
-[![](https://img.shields.io/pypi/l/stapomog?style=for-the-badge)](https://github.com/krateng/stapomog/blob/master/LICENSE)
+[![](https://img.shields.io/github/stars/krateng/ck2suite?style=for-the-badge&color=purple)](https://github.com/krateng/ck2suite/stargazers)
+[![](https://img.shields.io/pypi/l/stapomog?style=for-the-badge)](https://github.com/krateng/ck2suite/blob/master/LICENSE)
 
 A quick tool to generate static portrait mods for Crusader Kings 2.
 
