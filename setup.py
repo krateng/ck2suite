@@ -4,8 +4,8 @@ import sys
 
 packages = ["stapomog","suvorov","bierstadt"]
 
-packagename = sys.args.pop(1)
-assert packagename in pacakges
+packagename = sys.argv.pop(1)
+assert packagename in packages
 
 module = importlib.import_module(packagename)
 pkginfo = importlib.import_module(".__pkginfo__",package=packagename)
@@ -45,4 +45,3 @@ setuptools.setup(
 		]
 	}
 )
-
