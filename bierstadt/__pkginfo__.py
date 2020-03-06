@@ -5,6 +5,9 @@ author = {
 	"email":"misc@krateng.dev",
 	"github": "krateng"
 }
+links = {
+	"github":"ck2suite"
+}
 version = 0,2,0
 versionstr = ".".join(str(n) for n in version)
 
