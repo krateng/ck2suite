@@ -15,7 +15,7 @@ from .templates import *
 from .utils import interpret
 
 from suvorov.ck2file import CK2Definition
-import vermeer.library
+import bierstadt.library
 
 
 
