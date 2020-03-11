@@ -8,12 +8,13 @@ author = {
 links = {
 	"github":"ck2suite"
 }
-version = 1,0,0
+version = 1,0,2
 versionstr = ".".join(str(n) for n in version)
 
 
 requires = [
-	"doreah>=1.6.1"
+	"doreah>=1.6.1",
+	"bierstadt>=0.2.0"
 ]
 resources = [
 ]
