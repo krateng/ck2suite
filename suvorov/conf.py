@@ -55,12 +55,9 @@ scope_types = {
 	"mercenaries":				("common/mercenaries",		False,				False),
 	"characters":				("history/characters",		False,				False),
 	"death":					("common/death",			False,				False),
-	"objectives":				("common/objectives",		False,				False)
-}
-
-scope_types_separate_files = {
-	"provinces":("history/provinces",),
-	"titles":("history/titles",)
+	"objectives":				("common/objectives",		False,				False),
+	"provinces":				("history/provinces",		False,				True),
+	"titles":					("history/titles",			False,				True)
 }
 
 gfx_types = {

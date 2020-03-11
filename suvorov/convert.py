@@ -2,6 +2,7 @@ from .ck2path import CK2DataDir
 from . import conf
 from .ck2file.classes import CK2Definition, CK2Localisation
 from .suvfile import suv_eval
+from .utils import deepadd
 
 import os
 
@@ -103,6 +104,7 @@ def build_mod(modname,force_rebuild=False):
 
 	print("Handling graphics files...")
 	for gfxtype in conf.gfx_types:
+		if not os.path.exists(os.path.join(srcmod.fullpath,"gfx",gfxtype)): continue
 		gfxfiles = srcmod["gfx"][gfxtype].allfiles()
 		trgtfolder,bierstadt_type = conf.gfx_types[gfxtype]
 		any_changed_files = False
@@ -197,16 +199,29 @@ def build_mod(modname,force_rebuild=False):
 					if keep:
 						res = CK2Definition([(scope,"=",res.data)])
 
-					# TODO: separate files
+					if ownfile:
+						for entry in res.data:
+							targetfile = targetmod.relfile(os.path.join(folder,entry[0] + ".txt"))
+							defin = CK2Definition(entry[2])
+							print("\tWriting",col["green"](targetfile))
+							with targetfile.open("w") as tf:
+								defin.write(tf)
 
-					targetfile = targetmod.relfile(os.path.join(folder,identifier + ".txt"))
-					print("\tWriting",col["green"](targetfile))
-					with targetfile.open("w") as tf:
-						res.write(tf)
+							# mark new files as generated (for this run) and remember that they belong to this file (for future)
+							generated_files.append(targetfile.relpath)
+							deepadd(modinfo,("generated",f.relpath),targetfile.relpath)
+							#print(modinfo["generated"][f.relpath])
 
-					# mark new files as generated (for this run) and remember that they belong to this file (for future)
-					generated_files.append(targetfile.relpath)
-					modinfo.setdefault("generated",{}).setdefault(f.relpath,[]).append(targetfile.relpath)
+					else:
+
+						targetfile = targetmod.relfile(os.path.join(folder,identifier + ".txt"))
+						print("\tWriting",col["green"](targetfile))
+						with targetfile.open("w") as tf:
+							res.write(tf)
+
+						# mark new files as generated (for this run) and remember that they belong to this file (for future)
+						generated_files.append(targetfile.relpath)
+						deepadd(modinfo,("generated",f.relpath),targetfile.relpath)
 
 
 			# localisation
@@ -218,8 +233,7 @@ def build_mod(modname,force_rebuild=False):
 					l.write(tf)
 
 				generated_files.append(targetfile.relpath)
-				modinfo.setdefault("generated",{}).setdefault(f.relpath,[]).append(targetfile.relpath)
-
+				deepadd(modinfo,("generated",f.relpath),targetfile.relpath)
 
 		else:
 			print("\tSkipping",col["darkgrey"](f))
